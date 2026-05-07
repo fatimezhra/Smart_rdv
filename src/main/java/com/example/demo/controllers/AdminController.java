@@ -10,25 +10,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.repositories.RendezVousRepository;
 import com.example.demo.repositories.WaitingListRepository;
+import com.example.demo.services.AdminService;
 
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController {
 
     @Autowired
-    private RendezVousRepository rendezVousRepository;
-
-    @Autowired
-    private WaitingListRepository waitingListRepository;
+    private AdminService adminService;  // ✅ plus de repositories ici
 
     @GetMapping("/dashboard")
     public Map<String, Object> dashboard() {
-
-        Map<String, Object> data = new HashMap<>();
-
-        data.put("reservations", rendezVousRepository.findAll());
-        data.put("waitingList", waitingListRepository.findAll());
-
-        return data;
+        return adminService.getDashboardData();
     }
 }

@@ -14,7 +14,8 @@ services:
       retries: 5
 
   backend:
-    build: .
+    # ON UTILISE L'IMAGE DU HUB MAINTENANT
+    image: fzkhalil/smart-rdv-backend:latest 
     container_name: smartrdv-app
     ports:
       - "8081:8081"
