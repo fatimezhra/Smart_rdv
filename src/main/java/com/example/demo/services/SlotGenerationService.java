@@ -142,4 +142,32 @@ public class SlotGenerationService {
         }
         return result;
     }
+
+    // ===================== GENERATE SLOTS =====================
+    @Transactional
+    public List<TimeSlot> generateSlots(LocalDate date) {
+        if (isDateBlocked(date)) {
+            throw new RuntimeException("Cannot generate slots for a blocked date");
+        }
+
+        DayOfWeek dayOfWeek = date.getDayOfWeek();
+        WorkingConfig config = workingConfigRepository.findByDayOfWeek(dayOfWeek)
+                .orElseThrow(() -> new RuntimeException("No working config for " + dayOfWeek));
+
+        // Delete existing slots for the date
+        timeSlotRepository.deleteByDate(date);
+
+        List<TimeSlot> slots = new ArrayList<>();
+        LocalTime current = config.getStartTime();
+        while (current.isBefore(config.getEndTime())) {
+            TimeSlot slot = new TimeSlot();
+            slot.setDate(date);
+            slot.setHeure(current);
+            slot.setDisponible(true);
+            slots.add(slot);
+            current = current.plusMinutes(config.getSlotDurationMinutes());
+        }
+
+        return timeSlotRepository.saveAll(slots);
+    }
 }
