@@ -216,3 +216,53 @@ export async function fetchBlockedDates(month) {
   const query = month ? `?month=${month}` : '';
   return apiFetch(`/api/admin/blocked-dates${query}`);
 }
+
+// ========== PDF DOWNLOAD ==========
+export async function downloadAppointmentPdf(id) {
+  const token = getToken();
+  
+  const res = await fetch(`${API_BASE}/reservations/${id}/pdf`, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  if (res.status === 401 || res.status === 403) {
+    window.dispatchEvent(new CustomEvent('auth:logout'));
+    throw new Error(`Auth error ${res.status} on /reservations/${id}/pdf`);
+  }
+
+  if (!res.ok) {
+    let errorMessage = `Error ${res.status}`;
+    try {
+      const errorData = await res.json();
+      errorMessage = errorData.message || errorData.error || errorMessage;
+    } catch {
+      errorMessage = await res.text() || errorMessage;
+    }
+    throw new Error(errorMessage);
+  }
+
+  // Get filename from headers or create default
+  const disposition = res.headers.get('Content-Disposition');
+  let filename = `appointment_${id}.pdf`;
+  if (disposition && disposition.includes('filename=')) {
+    const filenameMatch = disposition.match(/filename="?([^"]+)"?/);
+    if (filenameMatch) {
+      filename = filenameMatch[1];
+    }
+  }
+
+  // Convert response to blob and create download link
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+  
+  return { success: true, filename };
+}

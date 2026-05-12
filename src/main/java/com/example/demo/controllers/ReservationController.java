@@ -1,6 +1,8 @@
 package com.example.demo.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,6 +21,7 @@ import com.example.demo.entities.WaitingList;
 import com.example.demo.repositories.RendezVousRepository;
 import com.example.demo.repositories.UserRepository;
 import com.example.demo.repositories.WaitingListRepository;
+import com.example.demo.services.PdfService;
 import com.example.demo.services.ReservationService;
 
 import java.util.Arrays;
@@ -40,6 +43,9 @@ public class ReservationController {
 
     @Autowired
     private WaitingListRepository waitingListRepository;
+
+    @Autowired
+    private PdfService pdfService;
 
     private User getCurrentUser() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -98,5 +104,36 @@ public class ReservationController {
     public List<WaitingList> getWaitingList() {
         User user = getCurrentUser();
         return waitingListRepository.findByUserOrderByPositionAsc(user);
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> getAppointmentPdf(@PathVariable Long id) {
+        User user = getCurrentUser();
+        
+        // Find the appointment for the current user
+        RendezVous rendezVous = rendezVousRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+        
+        // Verify the appointment belongs to the current user
+        if (!rendezVous.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Access denied: This appointment does not belong to you");
+        }
+        
+        try {
+            byte[] pdfContent = pdfService.generateAppointmentPdf(rendezVous);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", 
+                    "appointment_" + rendezVous.getId() + "_" + rendezVous.getDate() + ".pdf");
+            headers.setContentLength(pdfContent.length);
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfContent);
+                    
+        } catch (Exception e) {
+            throw new RuntimeException("Error generating PDF: " + e.getMessage(), e);
+        }
     }
 }
