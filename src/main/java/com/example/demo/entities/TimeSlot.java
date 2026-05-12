@@ -3,12 +3,17 @@ package com.example.demo.entities;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import jakarta.persistence.*;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
-
+@Table(name = "time_slot", indexes = {
+    @Index(name = "idx_slot_date", columnList = "date"),
+    @Index(name = "idx_slot_disponible", columnList = "disponible")
+})
+@Getter
+@Setter
 public class TimeSlot {
 
     @Id
@@ -17,38 +22,35 @@ public class TimeSlot {
     private LocalDate date;
     private LocalTime heure;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean disponible = true;
+
+    // Essential getters for Lombok compatibility
+    public Long getId() {
+        return id;
+    }
+
     public LocalDate getDate() {
-		return date;
-	}
+        return date;
+    }
 
-	public void setDate(LocalDate date) {
-		this.date = date;
-	}
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
 
-	public LocalTime getHeure() {
-		return heure;
-	}
+    public LocalTime getHeure() {
+        return heure;
+    }
 
-	public void setHeure(LocalTime heure) {
-		this.heure = heure;
-	}
+    public void setHeure(LocalTime heure) {
+        this.heure = heure;
+    }
 
-	private boolean disponible;
+    public boolean isDisponible() {
+        return disponible;
+    }
 
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public boolean isDisponible() {
-		return disponible;
-	}
-
-	public void setDisponible(boolean disponible) {
-		this.disponible = disponible;
-	}
-
+    public void setDisponible(boolean disponible) {
+        this.disponible = disponible;
+    }
 }

@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -26,50 +27,81 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/auth/login")
+            || path.startsWith("/auth/register")
+            || path.startsWith("/api/slots/available")
+            || path.startsWith("/api/slots/calendar")
+            || path.startsWith("/timeslots")
+            || path.startsWith("/v3/api-docs")
+            || path.startsWith("/swagger-ui");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
+        String path = request.getRequestURI();
 
-        String token = null;
-        String email = null;
-
-        // ✅ IMPORTANT FIX
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        token = authHeader.substring(7);
+        String authHeader = request.getHeader("Authorization");
+        System.out.println("[JWT] " + path + " | Auth header: " + (authHeader != null ? "present" : "missing"));
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            System.out.println("[JWT] " + path + " | No Bearer token, skipping auth");
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String token = authHeader.substring(7);
+        System.out.println("[JWT] " + path + " | Token: " + token.substring(0, Math.min(30, token.length())) + "...");
 
         try {
-            email = jwtService.extractUsername(token);
-        } catch (Exception e) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+            String email = jwtService.extractUsername(token);
+            System.out.println("[JWT] " + path + " | Extracted email: " + email);
 
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                System.out.println("[JWT] " + path + " | Loaded user: " + userDetails.getUsername() +
+                                   " | enabled=" + userDetails.isEnabled() +
+                                   " | authorities=" + userDetails.getAuthorities() +
+                                   " | has ROLE_ADMIN=" + userDetails.getAuthorities().stream()
+                                       .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN")));
 
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                boolean valid = jwtService.isTokenValid(token, userDetails.getUsername());
+                System.out.println("[JWT] " + path + " | Token valid: " + valid);
 
-            if (jwtService.isTokenValid(token, userDetails.getUsername())) {
+                if (valid) {
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
 
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
 
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    System.out.println("[JWT] " + path + " | Authentication set successfully");
+                } else {
+                    System.out.println("[JWT] " + path + " | Token validation failed");
+                }
             }
+        } catch (DisabledException e) {
+            System.err.println("[JWT] Compte désactivé : " + e.getMessage());
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Compte désactivé");
+            return;
+        } catch (Exception e) {
+            System.err.println("[JWT] Erreur token : " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);

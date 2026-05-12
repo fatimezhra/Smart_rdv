@@ -28,12 +28,9 @@ public class UserService {
         throw new RuntimeException("Password incorrect");
     }
 
-    String token = jwtService.generateToken(user.getEmail()); // IMPORTANT
+    String token = jwtService.generateToken(user.getEmail(), user.getRole().name());
 
-    AuthResponse response = new AuthResponse();
-    response.setToken(token);
-
-    return response;
+    return new AuthResponse(token, user.getRole().name(), user.getEmail(), user.getName());
 }
     public User register(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));

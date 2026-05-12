@@ -11,5 +11,8 @@ import java.util.List;
 @Repository
 public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
 
-	List<TimeSlot> findByDateAndDisponibleTrue(LocalDate  date);
+	List<TimeSlot> findByDateAndDisponibleTrue(LocalDate date);
+	List<TimeSlot> findByDate(LocalDate date);
+	long countByDateAndDisponibleTrue(LocalDate date);
+	long countByDate(LocalDate date);
 }

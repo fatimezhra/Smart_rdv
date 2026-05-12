@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Environment Files ###
+.env
+**/application-local.properties
+frontend/.env
+frontend/.env.local
+frontend/.env.production
