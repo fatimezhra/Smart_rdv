@@ -6,6 +6,7 @@ import {
   cancelReservation,
   rescheduleReservation,
   fetchAvailableSlots,
+  downloadAppointmentPdf,
 } from '../api/api';
 import { useToast } from '../context/ToastContext';
 
@@ -103,6 +104,15 @@ export default function ClientDashboard() {
     }
   };
 
+  const handleDownloadPdf = async (appointmentId) => {
+    try {
+      await downloadAppointmentPdf(appointmentId);
+      addToast('PDF downloaded successfully', 'success');
+    } catch (err) {
+      addToast(err.message, 'error');
+    }
+  };
+
   return (
     <div className="page fade-in">
       <h1 className="page-title">My Appointments</h1>
@@ -162,9 +172,12 @@ export default function ClientDashboard() {
                 </div>
               )}
               {tab === 'upcoming' && a.statut === 'CONFIRMED' && (
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
                   <button className="btn-primary" onClick={() => openReschedule(a)}>
                     Reschedule
+                  </button>
+                  <button className="btn-secondary" onClick={() => handleDownloadPdf(a.id)}>
+                    📄 Download PDF
                   </button>
                   <button className="btn-danger" onClick={() => handleCancel(a.id)}>
                     Cancel
@@ -175,6 +188,13 @@ export default function ClientDashboard() {
                 <button className="btn-danger" onClick={() => handleCancel(a.id)}>
                   Leave Waitlist
                 </button>
+              )}
+              {tab === 'history' && a.statut === 'CANCELLED' && (
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+                  <button className="btn-secondary" onClick={() => handleDownloadPdf(a.id)}>
+                    Download PDF
+                  </button>
+                </div>
               )}
             </div>
           ))}
