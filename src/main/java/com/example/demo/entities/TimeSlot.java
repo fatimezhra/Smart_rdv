@@ -30,6 +30,10 @@ public class TimeSlot {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public LocalDate getDate() {
         return date;
     }

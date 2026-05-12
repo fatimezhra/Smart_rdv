@@ -229,4 +229,24 @@ public class ReservationService {
         rdv.setUpdatedAt(LocalDateTime.now());
         return rendezVousRepository.save(rdv);
     }
+
+    // ===================== GET METHODS =====================
+    public List<RendezVous> getMyReservations() {
+        User currentUser = getCurrentUser();
+        return rendezVousRepository.findByUser(currentUser);
+    }
+
+    public List<RendezVous> getUpcoming() {
+        User currentUser = getCurrentUser();
+        return rendezVousRepository.findByUserAndStatutInOrderByDateDesc(
+            currentUser, 
+            List.of(Statut.CONFIRMED, Statut.WAITING)
+        );
+    }
+
+    private User getCurrentUser() {
+        // This would typically be injected or retrieved from security context
+        // For now, return a placeholder or throw exception
+        throw new RuntimeException("User context not available in service layer");
+    }
 }

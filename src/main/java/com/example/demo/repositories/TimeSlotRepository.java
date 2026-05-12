@@ -13,6 +13,9 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
 
 	List<TimeSlot> findByDateAndDisponibleTrue(LocalDate date);
 	List<TimeSlot> findByDate(LocalDate date);
+	List<TimeSlot> findByDateOrderByHeureAsc(LocalDate date);
+	List<TimeSlot> findByDateAndDisponibleTrueOrderByHeureAsc(LocalDate date);
 	long countByDateAndDisponibleTrue(LocalDate date);
 	long countByDate(LocalDate date);
+	void deleteByDate(LocalDate date);
 }
