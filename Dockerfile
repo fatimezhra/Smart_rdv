@@ -1,14 +1,12 @@
-# Utilisation de l'image Oracle pour Java 25
-FROM container-registry.oracle.com/java/openjdk:25
-
-# Dossier de travail
+# Étape 1 : Build avec Maven
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
 
-# Copie du JAR
-COPY target/ProjectGL-0.0.1-SNAPSHOT.jar app.jar
-
-# Port de ton application
-EXPOSE 8081
-
-# Lancement
+# Étape 2 : Run
+FROM container-registry.oracle.com/java/openjdk:25
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
