@@ -4,9 +4,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -44,24 +44,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        String path = request.getRequestURI();
-
-        // --- CORRECTION CRITIQUE POUR LE CORS ---
-        // Si c'est une requête de vérification (OPTIONS), on répond 200 OK immédiatement
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            response.setHeader("Access-Control-Allow-Origin", "http://localhost:3001");
-            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
-            response.setHeader("Access-Control-Allow-Headers", "*");
-            response.setHeader("Access-Control-Allow-Credentials", "true");
-            response.setStatus(HttpServletResponse.SC_OK);
-            return; 
-        }
-
         String authHeader = request.getHeader("Authorization");
-        
-        // Log pour debug (visible dans ton terminal Spring)
+
         if (authHeader != null) {
-            System.out.println("[JWT Filter] Requête sur : " + path + " | Token présent");
+            System.out.println("[JWT Filter] Requête sur : " + request.getRequestURI() + " | Token présent");
         }
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
