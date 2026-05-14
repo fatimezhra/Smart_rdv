@@ -39,7 +39,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/api/slots/available", "/api/slots/calendar", "/api/slots/all").permitAll()
+                .requestMatchers("/api/slots/**").permitAll()
                 .requestMatchers("/timeslots").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/auth/admin/create").hasRole("ADMIN")
