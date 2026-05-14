@@ -1,6 +1,7 @@
 // On force l'URL sur le port 8081 pour éviter les erreurs 404 sur le port 3001
 const API_BASE = 'http://localhost:8081';
-
+console.error("DEBUG: L'URL utilisée est bien :", API_BASE);
+alert("Le fichier API est chargé avec le port : " + API_BASE);
 function getToken() {
   return localStorage.getItem('token');
 }
