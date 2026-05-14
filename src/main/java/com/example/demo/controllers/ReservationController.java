@@ -23,8 +23,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/reservations")
-// --- AJOUTER CETTE LIGNE CI-DESSOUS ---
-@CrossOrigin(origins = "http://localhost:3001", allowedHeaders = "*", allowCredentials = "true")
 public class ReservationController {
 
     @Autowired
