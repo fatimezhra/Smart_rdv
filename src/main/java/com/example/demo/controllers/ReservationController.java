@@ -5,14 +5,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*; // Utilisation de * pour simplifier les imports
 
 import com.example.demo.entities.RendezVous;
 import com.example.demo.entities.Statut;
@@ -30,6 +23,8 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/reservations")
+// --- AJOUTER CETTE LIGNE CI-DESSOUS ---
+@CrossOrigin(origins = "http://localhost:3001", allowedHeaders = "*", allowCredentials = "true")
 public class ReservationController {
 
     @Autowired
@@ -110,11 +105,9 @@ public class ReservationController {
     public ResponseEntity<byte[]> getAppointmentPdf(@PathVariable Long id) {
         User user = getCurrentUser();
         
-        // Find the appointment for the current user
         RendezVous rendezVous = rendezVousRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Appointment not found"));
         
-        // Verify the appointment belongs to the current user
         if (!rendezVous.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("Access denied: This appointment does not belong to you");
         }
