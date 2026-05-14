@@ -4,7 +4,8 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ .
-RUN CI=false npm run build
+RUN npm run build
+
 # Étape 2 : Build Backend Spring Boot
 FROM maven:3.9-eclipse-temurin-21 AS backend-build
 WORKDIR /app
