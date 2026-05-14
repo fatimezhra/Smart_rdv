@@ -1,7 +1,5 @@
-alert("VÉRIFICATION : Le port configuré est 8081");
-const API_BASE = 'http://localhost:8081';
-console.error("DEBUG: L'URL utilisée est bien :", API_BASE);
-alert("Le fichier API est chargé avec le port : " + API_BASE);
+// Remplace l'URL complète par une chaîne vide
+const API_BASE = '';
 function getToken() {
   return localStorage.getItem('token');
 }
