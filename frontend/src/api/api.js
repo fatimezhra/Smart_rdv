@@ -127,6 +127,13 @@ export async function fetchCalendarAvailability(month) {
   return apiFetch(`/api/slots/calendar?month=${month}`);
 }
 
+/**
+ * Récupère les heures de travail pour une date donnée
+ */
+export async function fetchWorkingHours(date) {
+  return apiFetch(`/api/admin/working-hours?date=${date}`);
+}
+
 // ========== ADMINISTRATION ==========
 
 export async function fetchAdminReservations(params = {}) {
