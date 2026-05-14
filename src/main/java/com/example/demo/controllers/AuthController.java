@@ -32,15 +32,16 @@ public class AuthController {
     private UserRepository userRepository;
 
     // INSCRIPTION — always creates a CLIENT
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
-        User user = new User();
-        user.setName(request.getName());
-        user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
-        user.setRole(Role.CLIENT);
-        return ResponseEntity.ok(userService.register(user));
-    }
+  @PostMapping("/register")
+public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+    User user = new User();
+    user.setName(request.getName());
+    user.setEmail(request.getEmail());
+    user.setPassword(request.getPassword());
+    user.setRole(Role.CLIENT);
+    user.setEnabled(true);  // ← ADD THIS
+    return ResponseEntity.ok(userService.register(user));
+}
 
     // ADMIN CREATION — protected, only ADMIN can call
     @PostMapping("/admin/create")
