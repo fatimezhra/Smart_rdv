@@ -1,5 +1,5 @@
 const API_BASE = 'http://localhost:8081';
-function getToken() {
+console.log(">>> API_BASE FORCEE SUR :", API_BASE); // AJOUTE CETTE LIGNEfunction getToken() {
   return localStorage.getItem('token');
 }
 
