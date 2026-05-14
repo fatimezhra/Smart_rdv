@@ -46,39 +46,38 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
+        // --- CORRECTION CRITIQUE POUR LE CORS ---
+        // Si c'est une requête de vérification (OPTIONS), on répond 200 OK immédiatement
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            filterChain.doFilter(request, response);
-            return;
+            response.setHeader("Access-Control-Allow-Origin", "http://localhost:3001");
+            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
+            response.setHeader("Access-Control-Allow-Headers", "*");
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+            response.setStatus(HttpServletResponse.SC_OK);
+            return; 
         }
 
         String authHeader = request.getHeader("Authorization");
-        System.out.println("[JWT] " + path + " | Auth header: " + (authHeader != null ? "present" : "missing"));
+        
+        // Log pour debug (visible dans ton terminal Spring)
+        if (authHeader != null) {
+            System.out.println("[JWT Filter] Requête sur : " + path + " | Token présent");
+        }
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            System.out.println("[JWT] " + path + " | No Bearer token, skipping auth");
             filterChain.doFilter(request, response);
             return;
         }
 
         String token = authHeader.substring(7);
-        System.out.println("[JWT] " + path + " | Token: " + token.substring(0, Math.min(30, token.length())) + "...");
 
         try {
             String email = jwtService.extractUsername(token);
-            System.out.println("[JWT] " + path + " | Extracted email: " + email);
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-                System.out.println("[JWT] " + path + " | Loaded user: " + userDetails.getUsername() +
-                                   " | enabled=" + userDetails.isEnabled() +
-                                   " | authorities=" + userDetails.getAuthorities() +
-                                   " | has ROLE_ADMIN=" + userDetails.getAuthorities().stream()
-                                       .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN")));
 
-                boolean valid = jwtService.isTokenValid(token, userDetails.getUsername());
-                System.out.println("[JWT] " + path + " | Token valid: " + valid);
-
-                if (valid) {
+                if (jwtService.isTokenValid(token, userDetails.getUsername())) {
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails,
@@ -91,17 +90,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     );
 
                     SecurityContextHolder.getContext().setAuthentication(authToken);
-                    System.out.println("[JWT] " + path + " | Authentication set successfully");
-                } else {
-                    System.out.println("[JWT] " + path + " | Token validation failed");
                 }
             }
         } catch (DisabledException e) {
-            System.err.println("[JWT] Compte désactivé : " + e.getMessage());
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Compte désactivé");
             return;
         } catch (Exception e) {
-            System.err.println("[JWT] Erreur token : " + e.getMessage());
+            System.err.println("[JWT Error] " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);
