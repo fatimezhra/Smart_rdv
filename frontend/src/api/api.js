@@ -1,11 +1,13 @@
-// Remplace l'URL complète par une chaîne vide
+// On utilise une chaîne vide car le proxy dans package.json redirige 
+// automatiquement vers http://localhost:8081
 const API_BASE = '';
+
 function getToken() {
   return localStorage.getItem('token');
 }
 
 /**
- * Fonction générique pour appeler l'API
+ * Fonction générique pour appeler l'API avec gestion du Token et des erreurs
  */
 export async function apiFetch(path, options = {}) {
   const token = getToken();
@@ -16,16 +18,16 @@ export async function apiFetch(path, options = {}) {
     ...options.headers,
   };
 
-  // Log pour vérifier dans la console du navigateur
-  console.log(`[API CALL] ${options.method || 'GET'} ${API_BASE}${path}`);
+  // Log de debug pour vérifier l'appel dans la console
+  console.log(`[API CALL] ${options.method || 'GET'} ${path} | Token: ${!!token}`);
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
 
-  // Gestion des erreurs d'authentification (401 ou 403)
+  // Gestion de l'expiration de session
   if (res.status === 401 || res.status === 403) {
-    console.warn("Erreur d'authentification détectée");
+    console.warn("Session expirée ou accès refusé");
     window.dispatchEvent(new CustomEvent('auth:logout'));
-    throw new Error(`Session expirée ou accès refusé (${res.status})`);
+    throw new Error(`Erreur d'authentification (${res.status})`);
   }
 
   if (!res.ok) {
@@ -61,7 +63,6 @@ export async function loginUser(email, password) {
 
   localStorage.setItem('token', jwt);
 
-  // Extraction du payload du JWT pour le rôle
   const payload = JSON.parse(atob(jwt.split('.')[1]));
   const user = { 
     email: payload.sub, 
@@ -139,6 +140,15 @@ export async function fetchAdminUsers(page = 0, size = 20) {
 
 export async function generateSlots(date) {
   return apiFetch(`/api/admin/slots/generate?date=${date}`);
+}
+
+// ========== DATES BLOQUÉES (AJOUTÉ) ==========
+
+/**
+ * Récupère les dates bloquées pour le calendrier
+ */
+export async function fetchBlockedDates(month) {
+  return apiFetch(`/api/admin/blocked-dates?month=${month}`);
 }
 
 // ========== TÉLÉCHARGEMENT PDF ==========
