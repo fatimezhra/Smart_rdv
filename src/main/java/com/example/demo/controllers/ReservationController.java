@@ -5,8 +5,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*; // Utilisation de * pour simplifier les imports
-
+import org.springframework.web.bind.annotation.*;
 import com.example.demo.entities.RendezVous;
 import com.example.demo.entities.Statut;
 import com.example.demo.entities.User;
@@ -23,6 +22,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/reservations")
+@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 public class ReservationController {
 
     @Autowired
@@ -43,15 +43,15 @@ public class ReservationController {
     private User getCurrentUser() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-            throw new RuntimeException("Not authenticated");
+            throw new RuntimeException("Utilisateur non authentifié");
         }
         String email = auth.getName();
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
     }
 
     @GetMapping
-    public List<?> getMyReservations() {
+    public List<RendezVous> getMyReservations() {
         User user = getCurrentUser();
         return rendezVousRepository.findByUser(user);
     }
@@ -76,8 +76,9 @@ public class ReservationController {
     }
 
     @DeleteMapping("/{id}")
-    public void annuler(@PathVariable Long id) {
+    public ResponseEntity<Void> annuler(@PathVariable Long id) {
         reservationService.annuler(id);
+        return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{id}/reschedule")
@@ -102,29 +103,26 @@ public class ReservationController {
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> getAppointmentPdf(@PathVariable Long id) {
         User user = getCurrentUser();
-        
         RendezVous rendezVous = rendezVousRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Appointment not found"));
-        
+                .orElseThrow(() -> new RuntimeException("Rendez-vous non trouvé"));
+
         if (!rendezVous.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Access denied: This appointment does not belong to you");
+            throw new RuntimeException("Accès refusé : Ce rendez-vous ne vous appartient pas");
         }
-        
+
         try {
             byte[] pdfContent = pdfService.generateAppointmentPdf(rendezVous);
-            
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
             headers.setContentDispositionFormData("attachment", 
-                    "appointment_" + rendezVous.getId() + "_" + rendezVous.getDate() + ".pdf");
+                "appointment_" + rendezVous.getId() + "_" + rendezVous.getDate() + ".pdf");
             headers.setContentLength(pdfContent.length);
-            
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(pdfContent);
-                    
+
+            return ResponseEntity.ok().headers(headers).body(pdfContent);
+
         } catch (Exception e) {
-            throw new RuntimeException("Error generating PDF: " + e.getMessage(), e);
+            throw new RuntimeException("Erreur lors de la génération du PDF: " + e.getMessage());
         }
     }
 }
