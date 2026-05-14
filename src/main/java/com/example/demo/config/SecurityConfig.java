@@ -37,20 +37,17 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            .authorizeHttpRequests(auth -> auth
-                // === PUBLIC ===
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/api/slots/**", "/timeslots/**").permitAll()
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+         .authorizeHttpRequests(auth -> auth
+    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+    .requestMatchers("/auth/**").permitAll()
+    .requestMatchers("/api/slots/**", "/timeslots/**").permitAll()
+    
+    // Ajoute bien le préfixe /api ici si React l'utilise
+    .requestMatchers("/api/admin/**").hasAuthority("ADMIN") 
+    .requestMatchers("/api/reservations/**", "/reservations/**").authenticated() 
 
-                // === ADMIN ===
-                .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                // === RESERVATIONS (IMPORTANT) ===
-                .requestMatchers("/reservations/**").authenticated()
-
-                .anyRequest().authenticated()
-            )
+    .anyRequest().authenticated()
+)
 
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
