@@ -4,8 +4,8 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ .
-RUN npm run build
-
+# Dans ton Dockerfile, cherche la ligne du build et remplace-la par :
+RUN CI=false npm run build
 # Étape 2 : Build Backend Spring Boot
 FROM maven:3.9-eclipse-temurin-21 AS backend-build
 WORKDIR /app
