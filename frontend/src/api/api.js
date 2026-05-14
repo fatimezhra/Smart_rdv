@@ -1,5 +1,6 @@
-const API_BASE = 'http://localhost:8081';
-console.log(">>> API_BASE FORCEE SUR :", API_BASE); // AJOUTE CETTE LIGNEfunction getToken() {
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8081';
+
+LIGNEfunction getToken() {
   return localStorage.getItem('token');
 }
 
