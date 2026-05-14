@@ -1,4 +1,3 @@
-@"
 package com.example.demo.config;
 
 import org.springframework.context.annotation.Bean;
@@ -27,4 +26,3 @@ public class CorsConfig {
         return new CorsFilter(source);
     }
 }
-"@ | Set-Content src\main\java\com\example\demo\config\CorsConfig.java -Encoding UTF8
