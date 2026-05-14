@@ -36,16 +36,23 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
             .authorizeHttpRequests(auth -> auth
+                // === PUBLIC ===
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/api/slots/available", "/api/slots/calendar", "/api/slots/all").permitAll()
-                .requestMatchers("/timeslots").permitAll()
+                .requestMatchers("/api/slots/**", "/timeslots/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                .requestMatchers("/auth/admin/create").hasRole("ADMIN")
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                // === ADMIN ===
+                .requestMatchers("/auth/admin/create", "/api/admin/**").hasRole("ADMIN")
+
+                // === RESERVATIONS (IMPORTANT) ===
+                .requestMatchers("/reservations/**").authenticated()
+
                 .anyRequest().authenticated()
             )
+
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -54,11 +61,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedOriginPatterns(List.of("*"));        // Pour React en dev
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("Authorization"));
-        config.setAllowCredentials(true);
+        config.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
+        config.setAllowCredentials(false);                    // Important avec OriginPatterns
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
