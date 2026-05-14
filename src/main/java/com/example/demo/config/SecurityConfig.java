@@ -45,8 +45,7 @@ public class SecurityConfig {
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
                 // === ADMIN ===
-                .requestMatchers("/auth/admin/create", "/api/admin/**").hasRole("ADMIN")
-
+                .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                 // === RESERVATIONS (IMPORTANT) ===
                 .requestMatchers("/reservations/**").authenticated()
 
