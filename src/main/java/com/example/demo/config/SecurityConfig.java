@@ -1,3 +1,4 @@
+@"
 package com.example.demo.config;
 
 import org.springframework.context.annotation.Bean;
@@ -46,7 +47,6 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 
@@ -62,7 +62,6 @@ public class SecurityConfig {
         config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
@@ -78,3 +77,4 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 }
+"@ | Set-Content src\main\java\com\example\demo\config\SecurityConfig.java -Encoding UTF8
