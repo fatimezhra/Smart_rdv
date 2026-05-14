@@ -1,7 +1,4 @@
-const API_BASE = 'http://localhost:8081';
-
-console.log("🚀 API_BASE = " + API_BASE);
-
+// API_BASE n'est plus nécessaire grâce au proxy
 export async function apiFetch(path, options = {}) {
   const token = localStorage.getItem('token');
 
@@ -11,9 +8,9 @@ export async function apiFetch(path, options = {}) {
     ...options.headers,
   };
 
-  console.log(`[API] ${options.method || 'GET'} ${API_BASE}${path}`);
+  console.log(`[API] ${options.method || 'GET'} ${path}`);
 
-  const res = await fetch(`${API_BASE}${path}`, { 
+  const res = await fetch(path, { 
     ...options, 
     headers 
   });
