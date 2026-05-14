@@ -1,13 +1,8 @@
 // ===================== CONFIGURATION =====================
-const API_BASE = 'http://localhost:8081';   // Assure-toi que c'est bien ça
+const API_BASE = 'http://localhost:8081';
 
-function getToken() {
-  return localStorage.getItem('token');
-}
-
-// ===================== API FETCH =====================
 export async function apiFetch(path, options = {}) {
-  const token = getToken();
+  const token = localStorage.getItem('token');
 
   const headers = {
     ...(options.body ? { 'Content-Type': 'application/json' } : {}),
@@ -19,31 +14,20 @@ export async function apiFetch(path, options = {}) {
 
   const res = await fetch(`${API_BASE}${path}`, { 
     ...options, 
-    headers,
-    credentials: 'omit'
+    headers 
   });
 
-  if (res.status === 401 || res.status === 403) {
-    window.dispatchEvent(new CustomEvent('auth:logout'));
-    throw new Error(`Auth error ${res.status}`);
-  }
+  console.log(`[API Response] ${res.status} ${path}`);
 
   if (!res.ok) {
-    let errorMsg = `Erreur ${res.status}`;
-    try {
-      const err = await res.json();
-      errorMsg = err.message || errorMsg;
-    } catch {}
-    throw new Error(errorMsg);
+    throw new Error(`Erreur ${res.status}`);
   }
 
   const text = await res.text();
   return text ? JSON.parse(text) : null;
 }
 
-// ===================== CLIENT =====================
+// Fonction critique pour Upcoming
 export async function fetchUpcomingReservations() {
   return apiFetch('/reservations/upcoming');
 }
-
-// ... (tu peux garder le reste de tes fonctions)
