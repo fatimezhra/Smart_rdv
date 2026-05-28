@@ -1,21 +1,23 @@
 services:
   db:
-    image: mysql:8.0
+    image: postgres:15
     container_name: smartrdv-db
     environment:
-      - MYSQL_DATABASE=smartrdv_db
-      - MYSQL_ROOT_PASSWORD=root
+      - POSTGRES_DB=smartrdv_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root
     ports:
-      - "3306:3306"
+      - "5432:5432"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d smartrdv_db"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   backend:
-    # ON UTILISE L'IMAGE DU HUB MAINTENANT
-    image: fzkhalil/smart-rdv-backend:latest 
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: smartrdv-app
     ports:
       - "8081:8081"
@@ -23,7 +25,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/smartrdv_db?createDatabaseIfNotExist=true
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - DB_URL=jdbc:postgresql://db:5432/smartrdv_db
+      - DB_USER=postgres
+      - DB_PASSWORD=root
+      - JWT_SECRET=mysecretkeymysecretkeymysecretkeymysecretkey

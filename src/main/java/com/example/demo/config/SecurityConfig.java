@@ -37,15 +37,14 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/api/slots/available", "/api/slots/calendar", "/api/slots/all").permitAll()
-                .requestMatchers("/timeslots").permitAll()
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                .requestMatchers("/auth/admin/create").hasRole("ADMIN")
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
+    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+    .requestMatchers("/auth/**").permitAll()
+    .requestMatchers("/api/slots/**").permitAll()
+    .requestMatchers("/timeslots/**").permitAll()
+    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+    .requestMatchers("/api/admin/**").hasRole("ADMIN")
+    .anyRequest().authenticated()
+)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

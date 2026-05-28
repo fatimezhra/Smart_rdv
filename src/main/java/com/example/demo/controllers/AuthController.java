@@ -24,8 +24,9 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
-	@Autowired
-	private JwtService jwtService;
+
+    @Autowired
+    private JwtService jwtService;
     @Autowired
     private UserService userService;
     @Autowired
@@ -39,6 +40,7 @@ public class AuthController {
         user.setEmail(request.getEmail());
         user.setPassword(request.getPassword());
         user.setRole(Role.CLIENT);
+        user.setEnabled(true); // ← AJOUTÉ
         return ResponseEntity.ok(userService.register(user));
     }
 
@@ -46,6 +48,7 @@ public class AuthController {
     @PostMapping("/admin/create")
     public ResponseEntity<?> createAdmin(@RequestBody User user) {
         user.setRole(Role.ADMIN);
+        user.setEnabled(true); // ← AJOUTÉ
         return ResponseEntity.ok(userService.register(user));
     }
 

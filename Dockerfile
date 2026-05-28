@@ -14,8 +14,8 @@ COPY --from=frontend-build /app/frontend/build src/main/resources/static
 RUN mvn clean package -DskipTests
 
 # Étape 3 : Run
-FROM container-registry.oracle.com/java/openjdk:25
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=backend-build /app/target/*.jar app.jar
-EXPOSE 8080
+EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]

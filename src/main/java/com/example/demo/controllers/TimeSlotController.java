@@ -34,7 +34,10 @@ public class TimeSlotController {
     }
 
     @GetMapping("/api/slots/available")
-    public List<TimeSlot> getSlotsForDate(@RequestParam String date) {
+    public List<TimeSlot> getSlotsForDate(@RequestParam(required = false) String date) { // ← MODIFIÉ
+        if (date == null || date.isEmpty()) {
+            return timeSlotRepository.findAll();
+        }
         LocalDate localDate = LocalDate.parse(date);
         return slotGenerationService.getAvailableSlotsForDate(localDate);
     }
@@ -46,7 +49,10 @@ public class TimeSlotController {
     }
 
     @GetMapping("/api/slots/all")
-    public List<TimeSlot> getAllSlotsForDate(@RequestParam String date) {
+    public List<TimeSlot> getAllSlotsForDate(@RequestParam(required = false) String date) { // ← MODIFIÉ
+        if (date == null || date.isEmpty()) {
+            return timeSlotRepository.findAll();
+        }
         LocalDate localDate = LocalDate.parse(date);
         return timeSlotRepository.findByDate(localDate);
     }
