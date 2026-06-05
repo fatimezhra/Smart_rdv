@@ -34,5 +34,5 @@ export async function fetchAdminReservations() {
 }
 
 export async function cancelReservation(id) {
-  return apiFetch(`/api/reservations/${id}/cancel`, { method: 'PUT' });
+  return apiFetch('/api/reservations/' + id + '/cancel', { method: 'PUT' });
 }
