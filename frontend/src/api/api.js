@@ -167,3 +167,11 @@ export async function promoteWaitingListEntry(id) {
 export async function removeWaitingListEntry(id) {
   return apiFetch('/api/admin/waiting-list/' + id, { method: 'DELETE' });
 }
+
+export async function loginUser(data) {
+  return apiFetch('/api/auth/login', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function registerUser(data) {
+  return apiFetch('/api/auth/register', { method: 'POST', body: JSON.stringify(data) });
+}
