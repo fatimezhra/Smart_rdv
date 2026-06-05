@@ -28,3 +28,7 @@ export async function apiFetch(path, options = {}) {
 export async function fetchUpcomingReservations() {
   return apiFetch('/reservations/upcoming');
 }
+
+export async function fetchAdminReservations() {
+  return apiFetch('/api/admin/reservations');
+}
