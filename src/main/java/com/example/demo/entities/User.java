@@ -40,7 +40,7 @@ public class User {
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean enabled = true;
 
-    // Essential getters for Lombok compatibility
+    // Essential getters for Lombok
     public String getEmail() {
         return email;
     }
