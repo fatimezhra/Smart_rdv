@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/Smart_rdv/static/css/main.b644e9f1.css",
-    "main.js": "/Smart_rdv/static/js/main.2ebc418d.js",
+    "main.js": "/Smart_rdv/static/js/main.5b1bc605.js",
     "static/js/453.20359781.chunk.js": "/Smart_rdv/static/js/453.20359781.chunk.js",
     "index.html": "/Smart_rdv/index.html",
     "main.b644e9f1.css.map": "/Smart_rdv/static/css/main.b644e9f1.css.map",
-    "main.2ebc418d.js.map": "/Smart_rdv/static/js/main.2ebc418d.js.map",
+    "main.5b1bc605.js.map": "/Smart_rdv/static/js/main.5b1bc605.js.map",
     "453.20359781.chunk.js.map": "/Smart_rdv/static/js/453.20359781.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.b644e9f1.css",
-    "static/js/main.2ebc418d.js"
+    "static/js/main.5b1bc605.js"
   ]
 }
