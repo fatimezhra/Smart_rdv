@@ -230,6 +230,21 @@ public class ReservationService {
         return rendezVousRepository.save(rdv);
     }
 
+    // ===================== WAITING LIST =====================
+    @Transactional
+    public Map<String, Object> joinWaitingList(LocalDate date, User user) {
+        WaitingList w = new WaitingList();
+        w.setDate(date);
+        w.setUser(user);
+        int position = waitingListRepository.findByDateOrderByPositionAsc(date).size() + 1;
+        w.setPosition(position);
+        waitingListRepository.save(w);
+        Map<String, Object> result = new HashMap<>();
+        result.put("type", "WAITING_LIST");
+        result.put("position", w.getPosition());
+        return result;
+    }
+
     // ===================== GET METHODS =====================
     public List<RendezVous> getMyReservations() {
         User currentUser = getCurrentUser();

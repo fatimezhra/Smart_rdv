@@ -19,9 +19,10 @@ import com.example.demo.services.ReservationService;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/reservations")
+@RequestMapping("/api/reservations")
 @CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 public class ReservationController {
 
@@ -98,6 +99,13 @@ public class ReservationController {
     public List<WaitingList> getWaitingList() {
         User user = getCurrentUser();
         return waitingListRepository.findByUserOrderByPositionAsc(user);
+    }
+
+    @PostMapping("/waiting")
+    public Map<String, Object> joinWaitingList(@RequestBody Map<String, String> body) {
+        User user = getCurrentUser();
+        LocalDate date = LocalDate.parse(body.get("date"));
+        return reservationService.joinWaitingList(date, user);
     }
 
     @GetMapping("/{id}/pdf")

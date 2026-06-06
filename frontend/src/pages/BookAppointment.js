@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchCalendarAvailability, fetchAvailableSlots, fetchAllSlots, bookSlot } from '../api/api';
+import { fetchCalendarAvailability, fetchAvailableSlots, fetchAllSlots, bookSlot, joinWaitingList } from '../api/api';
 import { useToast } from '../context/ToastContext';
 
 function getMonthYearKey(date) {
@@ -176,15 +176,14 @@ export default function BookAppointment() {
 
   const handleJoinWaitingList = async () => {
     if (!selectedDate) return;
-    
     try {
-      // Find any slot to trigger waiting list logic
-      const anySlot = allSlots[0];
-      if (anySlot) {
-        await handleBook(anySlot.id);
-      }
+      const result = await joinWaitingList(selectedDate);
+      setWaitingPosition(result.position);
+      setBookingSuccess(`You are on the waiting list - position ${result.position}.`);
+      addToast('Added to waiting list', 'success');
     } catch (err) {
       console.error('Error joining waiting list:', err);
+      addToast(err.message, 'error');
     }
   };
 

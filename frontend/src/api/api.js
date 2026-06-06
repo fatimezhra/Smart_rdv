@@ -35,7 +35,7 @@ export async function fetchReservationHistory() {
 }
 
 export async function cancelReservation(id) {
-  return apiFetch('/api/reservations/' + id + '/cancel', { method: 'PUT' });
+  return apiFetch('/api/reservations/' + id, { method: 'DELETE' });
 }
 
 export async function rescheduleReservation(id, newSlotId) {
@@ -66,21 +66,25 @@ export async function fetchAvailableSlots(date) {
 }
 
 export async function fetchAllSlots(date) {
-  return apiFetch('/api/slots?date=' + date);
+  return apiFetch('/api/slots/all?date=' + date);
 }
 
 export async function bookSlot(slotId) {
-  return apiFetch('/api/slots/' + slotId + '/book', { method: 'POST' });
+  return apiFetch('/api/reservations/' + slotId, { method: 'POST' });
 }
 
 // Client - Waiting List
 export async function fetchWaitingList() {
-  return apiFetch('/api/waiting-list');
+  return apiFetch('/api/reservations/waiting');
+}
+
+export async function joinWaitingList(date) {
+  return apiFetch('/api/reservations/waiting', { method: 'POST', body: JSON.stringify({ date }) });
 }
 
 // Calendar
 export async function fetchCalendarAvailability(monthKey) {
-  return apiFetch('/api/calendar/availability?month=' + monthKey);
+  return apiFetch('/api/slots/calendar?month=' + monthKey);
 }
 
 // Admin - Dashboard
@@ -96,36 +100,34 @@ export async function fetchAdminReservations(params) {
 
 // Admin - Calendar Management
 export async function fetchBlockedDates(monthKey) {
-  return apiFetch('/api/admin/calendar/blocked?month=' + monthKey);
+  return apiFetch('/api/admin/blocked-dates?month=' + monthKey);
 }
 
 export async function blockDate(date, reason) {
-  return apiFetch('/api/admin/calendar/block', {
+  return apiFetch('/api/admin/blocked-dates', {
     method: 'POST',
     body: JSON.stringify({ date, reason }),
   });
 }
 
 export async function unblockDate(date) {
-  return apiFetch('/api/admin/calendar/unblock', {
-    method: 'POST',
-    body: JSON.stringify({ date }),
+  return apiFetch('/api/admin/blocked-dates/' + date, {
+    method: 'DELETE',
   });
 }
 
 export async function generateSlots(date) {
-  return apiFetch('/api/admin/slots/generate', {
-    method: 'POST',
-    body: JSON.stringify({ date }),
+  return apiFetch('/api/admin/slots/generate?date=' + date, {
+    method: 'GET',
   });
 }
 
 export async function fetchWorkingHours() {
-  return apiFetch('/api/admin/working-hours');
+  return apiFetch('/api/admin/config/hours');
 }
 
 export async function saveWorkingHours(config) {
-  return apiFetch('/api/admin/working-hours', {
+  return apiFetch('/api/admin/config/hours', {
     method: 'POST',
     body: JSON.stringify(config),
   });
@@ -168,8 +170,8 @@ export async function removeWaitingListEntry(id) {
   return apiFetch('/api/admin/waiting-list/' + id, { method: 'DELETE' });
 }
 
-export async function loginUser(data) {
-  return apiFetch('/api/auth/login', { method: 'POST', body: JSON.stringify(data) });
+export async function loginUser(email, password) {
+  return apiFetch('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
 }
 
 export async function registerUser(data) {
