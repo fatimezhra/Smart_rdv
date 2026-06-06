@@ -36,9 +36,11 @@ export default function BookAppointment() {
   const [showTakenSlotSuggestions, setShowTakenSlotSuggestions] = useState(false);
   const [loadingTakenSuggestions, setLoadingTakenSuggestions] = useState(false);
   const [blockedDateReasons, setBlockedDateReasons] = useState({});
+  const [calendarLoading, setCalendarLoading] = useState(false);
   const { addToast } = useToast();
 
   const loadCalendar = async () => {
+    setCalendarLoading(true);
     try {
       const data = await fetchCalendarAvailability(getMonthYearKey(currentMonth));
       setAvailability(data || {});
@@ -53,7 +55,10 @@ export default function BookAppointment() {
       });
       setBlockedDateReasons(reasons);
     } catch (err) {
-      // silently ignore calendar errors
+      console.error('Error loading calendar:', err);
+      addToast('Failed to load calendar availability', 'error');
+    } finally {
+      setCalendarLoading(false);
     }
   };
 
@@ -242,7 +247,10 @@ export default function BookAppointment() {
               <h2>{monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}</h2>
               <button onClick={handleNext}>→</button>
             </div>
-            <div className="calendar-grid">
+            {calendarLoading ? (
+              <div className="loading">Loading calendar...</div>
+            ) : (
+              <div className="calendar-grid">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
                 <div key={d} className="calendar-day-header">{d}</div>
               ))}
@@ -271,6 +279,7 @@ export default function BookAppointment() {
                 );
               })}
             </div>
+            )}
           </div>
         </div>
 
