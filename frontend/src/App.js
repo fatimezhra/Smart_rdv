@@ -18,7 +18,7 @@ function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <BrowserRouter>
+        <BrowserRouter basename="/Smart_rdv">
           <div className="app">
             <Navbar />
             <main>

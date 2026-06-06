@@ -1,3 +1,5 @@
+const API_BASE = process.env.REACT_APP_API_URL || '';
+
 // API_BASE n'est plus nécessaire grâce au proxy
 export async function apiFetch(path, options = {}) {
   const token = localStorage.getItem('token');
@@ -10,7 +12,7 @@ export async function apiFetch(path, options = {}) {
 
   console.log(`[API] ${options.method || 'GET'} ${path}`);
 
-  const res = await fetch(path, { 
+  const res = await fetch(API_BASE + path, { 
     ...options, 
     headers 
   });
@@ -47,7 +49,7 @@ export async function rescheduleReservation(id, newSlotId) {
 
 export async function downloadAppointmentPdf(id) {
   const token = localStorage.getItem('token');
-  const res = await fetch('/api/reservations/' + id + '/pdf', {
+  const res = await fetch(API_BASE + '/api/reservations/' + id + '/pdf', {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) throw new Error(`Erreur ${res.status}`);
