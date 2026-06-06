@@ -1,4 +1,5 @@
-const API_BASE = process.env.REACT_APP_API_URL || '';
+const API_BASE = 'https://smartrdv-production.up.railway.app';
+
 
 // API_BASE n'est plus nécessaire grâce au proxy
 export async function apiFetch(path, options = {}) {
