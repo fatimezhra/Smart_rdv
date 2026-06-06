@@ -11,6 +11,10 @@ export default function Navbar() {
     navigate('/login');
   };
 
+  const handleBookClick = () => {
+    navigate('/book');
+  };
+
   return (
     <nav className="navbar">
       <div className="navbar-brand">
@@ -20,7 +24,7 @@ export default function Navbar() {
         {isAuthenticated ? (
           <>
             <Link to="/dashboard">My Appointments</Link>
-            <Link to="/book">Book</Link>
+            <button className="btn-link" onClick={handleBookClick}>Book</button>
             {isAdmin && (
               <>
                 <Link to="/admin">Dashboard</Link>

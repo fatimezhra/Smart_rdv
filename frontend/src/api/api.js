@@ -13,9 +13,9 @@ export async function apiFetch(path, options = {}) {
 
   console.log(`[API] ${options.method || 'GET'} ${path}`);
 
-  const res = await fetch(API_BASE + path, { 
-    ...options, 
-    headers 
+  const res = await fetch(API_BASE + path, {
+    ...options,
+    headers
   });
 
   console.log(`[API Response] ${res.status} ${path}`);

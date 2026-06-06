@@ -111,27 +111,42 @@ public class SlotGenerationService {
         LocalDate start = month.atDay(1);
         LocalDate end = month.atEndOfMonth();
 
+        // Batch fetch all data needed for the month
+        List<BlockedDate> blockedDates = blockedDateRepository.findByDateBetween(start, end);
+        List<WorkingConfig> workingConfigs = workingConfigRepository.findAll();
+        List<TimeSlot> allSlots = timeSlotRepository.findByDateBetween(start, end);
+
+        // Create lookup maps for fast access
+        Map<LocalDate, String> blockedDateMap = new HashMap<>();
+        for (BlockedDate bd : blockedDates) {
+            blockedDateMap.put(bd.getDate(), bd.getReason());
+        }
+
+        Map<DayOfWeek, WorkingConfig> workingConfigMap = new HashMap<>();
+        for (WorkingConfig wc : workingConfigs) {
+            workingConfigMap.put(wc.getDayOfWeek(), wc);
+        }
+
+        Map<LocalDate, List<TimeSlot>> slotsByDate = new HashMap<>();
+        for (TimeSlot slot : allSlots) {
+            slotsByDate.computeIfAbsent(slot.getDate(), k -> new ArrayList<>()).add(slot);
+        }
+
+        // Compute availability for each day
         for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
             String status;
-            boolean isBlocked = blockedDateRepository.existsByDate(date);
             
-            if (isBlocked) {
-                // Get the blocked date reason
-                BlockedDate blockedDate = blockedDateRepository.findByDate(date).orElse(null);
-                String reason = blockedDate != null ? blockedDate.getReason() : "Blocked";
-                status = "BLOCKED:" + reason;
+            if (blockedDateMap.containsKey(date)) {
+                status = "BLOCKED:" + blockedDateMap.get(date);
+            } else if (!workingConfigMap.containsKey(date.getDayOfWeek())) {
+                status = "NON_WORKING";
             } else {
-                // Check if the day is a working day
-                boolean isWorkingDay = workingConfigRepository.findByDayOfWeek(date.getDayOfWeek()) != null;
-                
-                if (!isWorkingDay) {
-                    status = "NON_WORKING";
+                List<TimeSlot> daySlots = slotsByDate.get(date);
+                if (daySlots == null || daySlots.isEmpty()) {
+                    status = "NO_SLOTS";
                 } else {
-                    long total = timeSlotRepository.countByDate(date);
-                    long available = timeSlotRepository.countByDateAndDisponibleTrue(date);
-                    if (total == 0) {
-                        status = "NO_SLOTS"; // working day but no slots generated yet
-                    } else if (available == 0) {
+                    long available = daySlots.stream().filter(TimeSlot::isDisponible).count();
+                    if (available == 0) {
                         status = "FULL";
                     } else {
                         status = "OPEN";

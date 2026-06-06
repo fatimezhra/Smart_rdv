@@ -44,7 +44,7 @@ export default function BookAppointment() {
     try {
       const data = await fetchCalendarAvailability(getMonthYearKey(currentMonth));
       setAvailability(data || {});
-      
+
       // Parse blocked date reasons
       const reasons = {};
       Object.entries(data || {}).forEach(([date, status]) => {
@@ -247,10 +247,7 @@ export default function BookAppointment() {
               <h2>{monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}</h2>
               <button onClick={handleNext}>→</button>
             </div>
-            {calendarLoading ? (
-              <div className="loading">Loading calendar...</div>
-            ) : (
-              <div className="calendar-grid">
+            <div className="calendar-grid">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
                 <div key={d} className="calendar-day-header">{d}</div>
               ))}
@@ -279,7 +276,6 @@ export default function BookAppointment() {
                 );
               })}
             </div>
-            )}
           </div>
         </div>
 

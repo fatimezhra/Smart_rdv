@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -18,7 +18,7 @@ function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <BrowserRouter basename="/Smart_rdv">
+        <HashRouter>
           <div className="app">
             <Navbar />
             <main>
@@ -63,7 +63,7 @@ function App() {
               </Routes>
             </main>
           </div>
-        </BrowserRouter>
+        </HashRouter>
       </ToastProvider>
     </AuthProvider>
   );
