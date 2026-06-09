@@ -1,5 +1,7 @@
 package com.example.demo.controllers;
 
+import com.example.demo.dto.BlockedDateDTO;
+import com.example.demo.dto.WorkingConfigDTO;
 import com.example.demo.entities.BlockedDate;
 import com.example.demo.entities.TimeSlot;
 import com.example.demo.entities.WorkingConfig;
@@ -30,7 +32,12 @@ public class SlotAdminController {
     }
 
     @PostMapping("/config/hours")
-    public WorkingConfig setWorkingHours(@RequestBody WorkingConfig config) {
+    public WorkingConfig setWorkingHours(@RequestBody WorkingConfigDTO configDTO) {
+        WorkingConfig config = new WorkingConfig();
+        config.setDayOfWeek(configDTO.getDayOfWeek());
+        config.setStartTime(configDTO.getStartTime());
+        config.setEndTime(configDTO.getEndTime());
+        config.setSlotDurationMinutes(configDTO.getSlotDurationMinutes());
         return slotGenerationService.saveWorkingConfig(config);
     }
 
@@ -40,8 +47,8 @@ public class SlotAdminController {
     }
 
     @PostMapping("/blocked-dates")
-    public BlockedDate blockDate(@RequestBody BlockedDate blockedDate) {
-        return slotGenerationService.blockDate(blockedDate.getDate(), blockedDate.getReason());
+    public BlockedDate blockDate(@RequestBody BlockedDateDTO blockedDateDTO) {
+        return slotGenerationService.blockDate(blockedDateDTO.getDate(), blockedDateDTO.getReason());
     }
 
     @DeleteMapping("/blocked-dates/{date}")

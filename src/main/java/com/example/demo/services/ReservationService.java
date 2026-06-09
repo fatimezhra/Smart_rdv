@@ -121,7 +121,6 @@ public class ReservationService {
     }
 
     // Fix 1: Private method for direct booking without alternatives logic
-    @Transactional
     private RendezVous reserverDirectement(TimeSlot slot, User user) {
         slot.setDisponible(false);
         timeSlotRepository.save(slot);
