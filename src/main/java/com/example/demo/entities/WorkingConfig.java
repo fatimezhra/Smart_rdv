@@ -7,7 +7,7 @@ import jakarta.persistence.Id;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
-
+// working config
 @Entity
 public class WorkingConfig {
 
