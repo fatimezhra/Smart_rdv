@@ -34,10 +34,10 @@ public class SlotAdminController {
     @PostMapping("/config/hours")
     public WorkingConfig setWorkingHours(@RequestBody WorkingConfigDTO configDTO) {
         WorkingConfig config = new WorkingConfig();
-        config.setDayOfWeek(configDTO.getDayOfWeek());
-        config.setStartTime(configDTO.getStartTime());
-        config.setEndTime(configDTO.getEndTime());
-        config.setSlotDurationMinutes(configDTO.getSlotDurationMinutes());
+        config.setDayOfWeek(configDTO.dayOfWeek());
+        config.setStartTime(configDTO.startTime());
+        config.setEndTime(configDTO.endTime());
+        config.setSlotDurationMinutes(configDTO.slotDurationMinutes());
         return slotGenerationService.saveWorkingConfig(config);
     }
 
