@@ -35,6 +35,7 @@ build/
 ### Environment Files ###
 .env
 **/application-local.properties
+**/application-mysql-remote.properties
 frontend/.env
 frontend/.env.local
 frontend/.env.production

@@ -2,6 +2,7 @@ package com.example.demo.services;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,8 @@ import com.example.demo.repositories.WaitingListRepository;
 @Service
 public class AdminService {
 
+    private static final ZoneId ZONE_ID = ZoneId.of("Africa/Casablanca");
+
     @Autowired
     private RendezVousRepository rendezVousRepository;
 
@@ -34,8 +37,8 @@ public class AdminService {
 
     public Map<String, Object> getDashboardData() {
         Map<String, Object> data = new HashMap<>();
-        LocalDate today = LocalDate.now();
-        YearMonth thisMonth = YearMonth.now();
+        LocalDate today = LocalDate.now(ZONE_ID);
+        YearMonth thisMonth = YearMonth.now(ZONE_ID);
 
         data.put("totalUsers", userRepository.count());
         data.put("totalReservations", rendezVousRepository.count());

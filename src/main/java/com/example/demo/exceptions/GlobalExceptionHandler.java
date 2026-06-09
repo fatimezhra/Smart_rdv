@@ -15,10 +15,13 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final String ERROR = "error";
+    private static final String MESSAGE = "message";
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntime(RuntimeException ex) {
         return ResponseEntity.badRequest()
-            .body(Map.of("message", ex.getMessage(), "error", "BAD_REQUEST"));
+            .body(Map.of(MESSAGE, ex.getMessage(), ERROR, "BAD_REQUEST"));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -27,24 +30,24 @@ public class GlobalExceptionHandler {
             .stream().map(e -> e.getField() + ": " + e.getDefaultMessage())
             .collect(Collectors.joining(", "));
         return ResponseEntity.badRequest()
-            .body(Map.of("message", message, "error", "VALIDATION_ERROR"));
+            .body(Map.of(MESSAGE, message, ERROR, "VALIDATION_ERROR"));
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleNotFound(UsernameNotFoundException ex) {
         return ResponseEntity.status(404)
-            .body(Map.of("message", ex.getMessage(), "error", "NOT_FOUND"));
+            .body(Map.of(MESSAGE, ex.getMessage(), ERROR, "NOT_FOUND"));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(403)
-            .body(Map.of("message", "Access denied", "error", "FORBIDDEN"));
+            .body(Map.of(MESSAGE, "Access denied", ERROR, "FORBIDDEN"));
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<Map<String, String>> handleAuthentication(AuthenticationException ex) {
         return ResponseEntity.status(401)
-            .body(Map.of("message", "Authentication failed", "error", "UNAUTHORIZED"));
+            .body(Map.of(MESSAGE, "Authentication failed", ERROR, "UNAUTHORIZED"));
     }
 }

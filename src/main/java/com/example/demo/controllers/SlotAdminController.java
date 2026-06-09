@@ -10,12 +10,15 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
 @PreAuthorize("hasRole('ADMIN')")
 public class SlotAdminController {
+
+    private static final ZoneId ZONE_ID = ZoneId.of("Africa/Casablanca");
 
     @Autowired
     private SlotGenerationService slotGenerationService;
@@ -53,6 +56,6 @@ public class SlotAdminController {
             YearMonth ym = YearMonth.parse(month);
             return slotGenerationService.getBlockedDatesForMonth(ym);
         }
-        return slotGenerationService.getBlockedDatesForMonth(YearMonth.now());
+        return slotGenerationService.getBlockedDatesForMonth(YearMonth.now(ZONE_ID));
     }
 }

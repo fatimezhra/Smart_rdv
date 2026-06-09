@@ -170,13 +170,12 @@ class UserRepositoryTest {
         // Given
         User savedUser = TestDataFactory.createTestUser();
         savedUser.setId(1L);
-        
+
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
         doNothing().when(userRepository).delete(any(User.class));
 
         // When
         User saved = userRepository.save(testUser);
-        Long id = saved.getId();
         userRepository.delete(saved);
 
         // Then

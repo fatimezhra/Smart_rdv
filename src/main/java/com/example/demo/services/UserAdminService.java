@@ -2,6 +2,7 @@ package com.example.demo.services;
 
 import com.example.demo.entities.Role;
 import com.example.demo.entities.User;
+import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.repositories.RendezVousRepository;
 import com.example.demo.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,8 @@ import java.util.Map;
 @Service
 public class UserAdminService {
 
+    private static final String USER_NOT_FOUND = "User not found";
+
     @Autowired
     private UserRepository userRepository;
 
@@ -29,7 +32,7 @@ public class UserAdminService {
     @Transactional
     public User disableUser(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
         user.setEnabled(false);
         return userRepository.save(user);
     }
@@ -37,7 +40,7 @@ public class UserAdminService {
     @Transactional
     public User enableUser(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
         user.setEnabled(true);
         return userRepository.save(user);
     }
@@ -45,7 +48,7 @@ public class UserAdminService {
     @Transactional
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
         rendezVousRepository.deleteAll(rendezVousRepository.findByUser(user));
         userRepository.delete(user);
     }

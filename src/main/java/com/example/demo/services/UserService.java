@@ -1,13 +1,14 @@
 package com.example.demo.services;
 
+import com.example.demo.dto.AuthResponse;
+import com.example.demo.entities.User;
+import com.example.demo.exceptions.BadRequestException;
+import com.example.demo.exceptions.ResourceNotFoundException;
+import com.example.demo.repositories.UserRepository;
+import com.example.demo.security.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import com.example.demo.dto.AuthResponse;
-import com.example.demo.entities.User;
-import com.example.demo.repositories.UserRepository;
-import com.example.demo.security.JwtService;
 
 @Service
 public class UserService {
@@ -22,10 +23,10 @@ public class UserService {
  public AuthResponse login(String email, String password) {
 
     User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     if (!passwordEncoder.matches(password, user.getPassword())) {
-        throw new RuntimeException("Password incorrect");
+        throw new BadRequestException("Password incorrect");
     }
 
     String token = jwtService.generateToken(user.getEmail(), user.getRole().name());

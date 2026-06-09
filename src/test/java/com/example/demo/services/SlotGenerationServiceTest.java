@@ -18,7 +18,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Arrays;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -51,8 +51,8 @@ class SlotGenerationServiceTest {
     @Test
     void generateSlots_ShouldCreateSlots_WhenWorkingConfigExists() {
         // Given
-        LocalDate testDate = LocalDate.of(2026, 5, 15);
-        
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
+
         when(workingConfigRepository.findByDayOfWeek(any())).thenReturn(java.util.Optional.of(testConfig));
         when(timeSlotRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -66,14 +66,14 @@ class SlotGenerationServiceTest {
     @Test
     void generateSlots_ShouldThrowException_WhenNoWorkingConfig() {
         // Given
-        LocalDate testDate = LocalDate.of(2026, 5, 15);
-        
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
+
         when(workingConfigRepository.findByDayOfWeek(any())).thenReturn(java.util.Optional.empty());
 
         // When & Then
-        assertThrows(RuntimeException.class, () -> 
+        assertThrows(RuntimeException.class, () ->
                 slotGenerationService.generateSlots(testDate));
-        
+
         verify(timeSlotRepository, never()).deleteByDate(testDate);
         verify(timeSlotRepository, never()).saveAll(anyList());
     }
@@ -81,11 +81,11 @@ class SlotGenerationServiceTest {
     @Test
     void generateSlots_ShouldCreateCorrectNumberOfSlots() {
         // Given
-        LocalDate testDate = LocalDate.of(2026, 5, 15); // Monday
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15); // Monday
         testConfig.setStartTime(LocalTime.of(9, 0));
         testConfig.setEndTime(LocalTime.of(17, 0));
         testConfig.setSlotDurationMinutes(30);
-        
+
         when(workingConfigRepository.findByDayOfWeek(any())).thenReturn(java.util.Optional.of(testConfig));
 
         // When
@@ -102,7 +102,7 @@ class SlotGenerationServiceTest {
     @Test
     void generateSlots_ShouldHandleBreakTimeCorrectly() {
         // Given
-        LocalDate testDate = LocalDate.of(2026, 5, 15);
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
         testConfig.setStartTime(LocalTime.of(9, 0));
         testConfig.setEndTime(LocalTime.of(12, 30));
         testConfig.setSlotDurationMinutes(30);
@@ -122,17 +122,17 @@ class SlotGenerationServiceTest {
     @Test
     void generateSlots_ShouldHandleMultipleWorkingConfigs() {
         // Given
-        LocalDate testDate = LocalDate.of(2026, 5, 15);
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
         WorkingConfig config1 = TestDataFactory.createTestWorkingConfig();
         config1.setStartTime(LocalTime.of(9, 0));
         config1.setEndTime(LocalTime.of(12, 0));
         config1.setSlotDurationMinutes(30);
-        
+
         WorkingConfig config2 = TestDataFactory.createTestWorkingConfig();
         config2.setStartTime(LocalTime.of(14, 0));
         config2.setEndTime(LocalTime.of(17, 0));
         config2.setSlotDurationMinutes(60);
-        
+
         when(workingConfigRepository.findByDayOfWeek(any())).thenReturn(java.util.Optional.of(config2));
 
         // When
@@ -149,8 +149,7 @@ class SlotGenerationServiceTest {
     @Test
     void generateSlots_ShouldSetCorrectDateAndAvailability() {
         // Given
-        LocalDate testDate = LocalDate.of(2026, 5, 15);
-        List<WorkingConfig> configs = Arrays.asList(testConfig);
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
         when(workingConfigRepository.findByDayOfWeek(any())).thenReturn(java.util.Optional.of(testConfig));
 
         // When
@@ -159,8 +158,8 @@ class SlotGenerationServiceTest {
         // Then
         verify(timeSlotRepository).saveAll(argThat(slots -> {
             List<TimeSlot> timeSlots = (List<TimeSlot>) slots;
-            return timeSlots.stream().allMatch(slot -> 
-                slot.getDate().equals(testDate) && 
+            return timeSlots.stream().allMatch(slot ->
+                slot.getDate().equals(testDate) &&
                 slot.isDisponible());
         }));
     }

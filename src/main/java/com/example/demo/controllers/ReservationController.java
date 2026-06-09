@@ -1,25 +1,27 @@
 package com.example.demo.controllers;
 
+import com.example.demo.entities.RendezVous;
+import com.example.demo.entities.Statut;
+import com.example.demo.entities.User;
+import com.example.demo.entities.WaitingList;
+import com.example.demo.exceptions.BadRequestException;
+import com.example.demo.exceptions.ResourceNotFoundException;
+import com.example.demo.repositories.RendezVousRepository;
+import com.example.demo.repositories.UserRepository;
+import com.example.demo.repositories.WaitingListRepository;
+import com.example.demo.services.PdfService;
+import com.example.demo.services.ReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import com.example.demo.entities.RendezVous;
-import com.example.demo.entities.Statut;
-import com.example.demo.entities.User;
-import com.example.demo.entities.WaitingList;
-import com.example.demo.repositories.RendezVousRepository;
-import com.example.demo.repositories.UserRepository;
-import com.example.demo.repositories.WaitingListRepository;
-import com.example.demo.services.PdfService;
-import com.example.demo.services.ReservationService;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/reservations")
@@ -44,11 +46,11 @@ public class ReservationController {
     private User getCurrentUser() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-            throw new RuntimeException("Utilisateur non authentifié");
+            throw new BadRequestException("Utilisateur non authentifié");
         }
         String email = auth.getName();
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé"));
     }
 
     @GetMapping
@@ -112,10 +114,10 @@ public class ReservationController {
     public ResponseEntity<byte[]> getAppointmentPdf(@PathVariable Long id) {
         User user = getCurrentUser();
         RendezVous rendezVous = rendezVousRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rendez-vous non trouvé"));
+                .orElseThrow(() -> new ResourceNotFoundException("Rendez-vous non trouvé"));
 
         if (!rendezVous.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Accès refusé : Ce rendez-vous ne vous appartient pas");
+            throw new BadRequestException("Accès refusé : Ce rendez-vous ne vous appartient pas");
         }
 
         try {
@@ -123,14 +125,14 @@ public class ReservationController {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.setContentDispositionFormData("attachment", 
+            headers.setContentDispositionFormData("attachment",
                 "appointment_" + rendezVous.getId() + "_" + rendezVous.getDate() + ".pdf");
             headers.setContentLength(pdfContent.length);
 
             return ResponseEntity.ok().headers(headers).body(pdfContent);
 
         } catch (Exception e) {
-            throw new RuntimeException("Erreur lors de la génération du PDF: " + e.getMessage());
+            throw new BadRequestException("Erreur lors de la génération du PDF: " + e.getMessage());
         }
     }
 }
