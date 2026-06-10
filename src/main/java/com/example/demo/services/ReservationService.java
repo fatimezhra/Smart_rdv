@@ -48,7 +48,7 @@ public class ReservationService implements IReservationService {
 
     // ===================== RÉSERVER =====================
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public ResponseEntity<?> reserver(Long timeSlotId, User user) {
+    public ResponseEntity<Map<String, Object>> reserver(Long timeSlotId, User user) {
 
         TimeSlot slot = timeSlotRepository.findById(timeSlotId)
                 .orElseThrow(() -> new ResourceNotFoundException("TimeSlot introuvable"));

@@ -9,7 +9,6 @@ import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.repositories.RendezVousRepository;
 import com.example.demo.repositories.TimeSlotRepository;
 import com.example.demo.repositories.WaitingListRepository;
-import com.example.demo.services.IReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface IReservationService {
-    ResponseEntity<?> reserver(Long timeSlotId, User user);
+    ResponseEntity<Map<String, Object>> reserver(Long timeSlotId, User user);
     void annuler(Long rdvId);
     RendezVous reschedule(Long rdvId, Long newSlotId, User user);
     RendezVous addNotes(Long rdvId, String notes, User user);

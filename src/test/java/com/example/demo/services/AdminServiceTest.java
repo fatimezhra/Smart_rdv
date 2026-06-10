@@ -16,7 +16,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
-import java.time.YearMonth;
+import java.time.Month;
 import java.util.List;
 import java.util.Map;
 
@@ -131,7 +131,7 @@ class AdminServiceTest {
         // Given
         BlockedDate blockedDate = new BlockedDate();
         blockedDate.setId(1L);
-        blockedDate.setDate(LocalDate.now().plusDays(5));
+        blockedDate.setDate(LocalDate.of(2025, Month.JANUARY, 15).plusDays(5));
 
         when(userRepository.count()).thenReturn(100L);
         when(rendezVousRepository.count()).thenReturn(500L);

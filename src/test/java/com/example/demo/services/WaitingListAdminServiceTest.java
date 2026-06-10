@@ -1,7 +1,6 @@
 package com.example.demo.services;
 
 import com.example.demo.entities.RendezVous;
-import com.example.demo.entities.Statut;
 import com.example.demo.entities.TimeSlot;
 import com.example.demo.entities.User;
 import com.example.demo.entities.WaitingList;
@@ -21,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.Month;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,14 +64,14 @@ class WaitingListAdminServiceTest {
 
         testSlot = new TimeSlot();
         testSlot.setId(1L);
-        testSlot.setDate(LocalDate.now().plusDays(1));
+        testSlot.setDate(LocalDate.of(2025, Month.JANUARY, 15).plusDays(1));
         testSlot.setHeure(LocalTime.of(10, 0));
         testSlot.setDisponible(true);
 
         testWaitingList = new WaitingList();
         testWaitingList.setId(1L);
         testWaitingList.setUser(testUser);
-        testWaitingList.setDate(LocalDate.now().plusDays(1));
+        testWaitingList.setDate(LocalDate.of(2025, Month.JANUARY, 15).plusDays(1));
         testWaitingList.setPosition(1);
     }
 
