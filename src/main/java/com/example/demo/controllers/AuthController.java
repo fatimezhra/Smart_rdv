@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.AuthResponse;
+import com.example.demo.dto.LoginRequest;
 import com.example.demo.dto.RegisterRequest;
 import com.example.demo.entities.Role;
 import com.example.demo.entities.User;
@@ -58,7 +59,7 @@ public class AuthController {
 
     // LOGIN
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody RegisterRequest request) {
+    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return userService.login(request.getEmail(), request.getPassword());
     }
 
