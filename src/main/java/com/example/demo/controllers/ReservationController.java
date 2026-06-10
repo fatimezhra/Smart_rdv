@@ -10,7 +10,7 @@ import com.example.demo.repositories.RendezVousRepository;
 import com.example.demo.repositories.UserRepository;
 import com.example.demo.repositories.WaitingListRepository;
 import com.example.demo.services.PdfService;
-import com.example.demo.services.ReservationService;
+import com.example.demo.services.IReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -29,7 +29,7 @@ import java.util.Map;
 public class ReservationController {
 
     @Autowired
-    private ReservationService reservationService;
+    private IReservationService reservationService;
 
     @Autowired
     private UserRepository userRepository;

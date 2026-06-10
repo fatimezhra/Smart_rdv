@@ -5,7 +5,7 @@ import com.example.demo.entities.User;
 import com.example.demo.exceptions.BadRequestException;
 import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.repositories.UserRepository;
-import com.example.demo.security.JwtService;
+import com.example.demo.security.IJwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,7 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
-    private JwtService jwtService;
+    private IJwtService jwtService;
 
  public AuthResponse login(String email, String password) {
 

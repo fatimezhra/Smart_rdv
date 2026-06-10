@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class ReservationService {
+public class ReservationService implements IReservationService {
 
     private static final String RENDEZ_VOUS_INTROUVABLE = "Rendez-vous introuvable";
     private static final ZoneId ZONE_ID = ZoneId.of("Africa/Casablanca");
