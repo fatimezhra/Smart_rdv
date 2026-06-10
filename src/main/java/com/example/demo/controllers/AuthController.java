@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.AuthResponse;
 import com.example.demo.dto.RegisterRequest;
+import com.example.demo.dto.UserRequestDTO;
 import com.example.demo.entities.Role;
 import com.example.demo.entities.User;
 import com.example.demo.repositories.UserRepository;
@@ -46,7 +47,11 @@ public class AuthController {
 
     // ADMIN CREATION — protected, only ADMIN can call
     @PostMapping("/admin/create")
-    public ResponseEntity<?> createAdmin(@RequestBody User user) {
+    public ResponseEntity<?> createAdmin(@Valid @RequestBody UserRequestDTO request) {
+        User user = new User();
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        user.setPassword(request.getPassword());
         user.setRole(Role.ADMIN);
         user.setEnabled(true); // ← AJOUTÉ
         return ResponseEntity.ok(userService.register(user));
@@ -54,8 +59,8 @@ public class AuthController {
 
     // LOGIN
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody User user) {
-        return userService.login(user.getEmail(), user.getPassword());
+    public AuthResponse login(@Valid @RequestBody UserRequestDTO request) {
+        return userService.login(request.getEmail(), request.getPassword());
     }
 
     // CURRENT USER
