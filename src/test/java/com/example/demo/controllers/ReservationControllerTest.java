@@ -204,4 +204,35 @@ class ReservationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(header().exists("Content-Disposition"));
     }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    void getAppointmentPdf_ShouldThrowException_WhenRendezVousNotFound() throws Exception {
+        when(rendezVousRepository.findById(1L)).thenReturn(java.util.Optional.empty());
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/reservations/1/pdf"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    void getAppointmentPdf_ShouldThrowException_WhenAccessDenied() throws Exception {
+        User otherUser = new User();
+        otherUser.setId(2L);
+        otherUser.setEmail("other@example.com");
+        testRendezVous.setUser(otherUser);
+        when(rendezVousRepository.findById(1L)).thenReturn(java.util.Optional.of(testRendezVous));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/reservations/1/pdf"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = "unknown@example.com")
+    void getMyReservations_ShouldThrowException_WhenUserNotFound() throws Exception {
+        when(userRepository.findByEmail("unknown@example.com")).thenReturn(java.util.Optional.empty());
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/reservations"))
+                .andExpect(status().isBadRequest());
+    }
 }

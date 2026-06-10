@@ -320,4 +320,18 @@ class ReservationServiceTest {
         assertThrows(RuntimeException.class, () ->
                 reservationService.addNotes(1L, "notes", testUser));
     }
+
+    @Test
+    void getMyReservations_ShouldThrowException_WhenUserContextNotAvailable() {
+        // When & Then
+        assertThrows(IllegalStateException.class, () ->
+                reservationService.getMyReservations());
+    }
+
+    @Test
+    void getUpcoming_ShouldThrowException_WhenUserContextNotAvailable() {
+        // When & Then
+        assertThrows(IllegalStateException.class, () ->
+                reservationService.getUpcoming());
+    }
 }

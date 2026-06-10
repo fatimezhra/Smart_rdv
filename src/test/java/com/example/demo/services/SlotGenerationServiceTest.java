@@ -1,6 +1,7 @@
 package com.example.demo.services;
 
 import com.example.demo.TestDataFactory;
+import com.example.demo.entities.BlockedDate;
 import com.example.demo.entities.TimeSlot;
 import com.example.demo.entities.WorkingConfig;
 import com.example.demo.repositories.TimeSlotRepository;
@@ -19,7 +20,9 @@ import org.springframework.test.context.ActiveProfiles;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.Month;
+import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -41,11 +44,16 @@ class SlotGenerationServiceTest {
     private SlotGenerationService slotGenerationService;
 
     private WorkingConfig testConfig;
+    private BlockedDate testBlockedDate;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
         testConfig = TestDataFactory.createTestWorkingConfig();
+        testBlockedDate = new BlockedDate();
+        testBlockedDate.setId(1L);
+        testBlockedDate.setDate(LocalDate.of(2026, Month.MAY, 15));
+        testBlockedDate.setReason("Holiday");
     }
 
     @Test
@@ -370,5 +378,134 @@ class SlotGenerationServiceTest {
 
         // Then
         assertFalse(result);
+    }
+
+    @Test
+    void saveWorkingConfig_ShouldThrowException_WhenSlotDurationEquals481() {
+        // Given
+        testConfig.setSlotDurationMinutes(481);
+
+        // When & Then
+        assertThrows(IllegalArgumentException.class, () ->
+                slotGenerationService.saveWorkingConfig(testConfig));
+    }
+
+    @Test
+    void blockDate_ShouldBlockDate_WhenNotAlreadyBlocked() {
+        // Given
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
+        when(blockedDateRepository.existsByDate(testDate)).thenReturn(false);
+        when(blockedDateRepository.save(any(BlockedDate.class))).thenReturn(testBlockedDate);
+
+        // When
+        BlockedDate result = slotGenerationService.blockDate(testDate, "Holiday");
+
+        // Then
+        assertNotNull(result);
+        verify(blockedDateRepository).save(any(BlockedDate.class));
+    }
+
+    @Test
+    void getBlockedDatesForMonth_ShouldReturnEmptyList_WhenNoBlockedDates() {
+        // Given
+        YearMonth month = YearMonth.of(2026, Month.MAY);
+        when(blockedDateRepository.findByDateBetween(any(), any())).thenReturn(List.of());
+
+        // When
+        List<BlockedDate> result = slotGenerationService.getBlockedDatesForMonth(month);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getCalendarAvailability_ShouldReturnBlockedStatus_WhenDateIsBlocked() {
+        // Given
+        YearMonth month = YearMonth.of(2026, Month.MAY);
+        BlockedDate blocked = new BlockedDate();
+        blocked.setDate(LocalDate.of(2026, Month.MAY, 15));
+        blocked.setReason("Holiday");
+        when(blockedDateRepository.findByDateBetween(any(), any())).thenReturn(List.of(blocked));
+        when(workingConfigRepository.findAll()).thenReturn(List.of());
+        when(timeSlotRepository.findByDateBetween(any(), any())).thenReturn(List.of());
+
+        // When
+        Map<String, String> result = slotGenerationService.getCalendarAvailability(month);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.containsKey("2026-05-15"));
+        assertTrue(result.get("2026-05-15").startsWith("BLOCKED:"));
+    }
+
+    @Test
+    void getCalendarAvailability_ShouldReturnNonWorkingStatus_WhenNoConfig() {
+        // Given
+        YearMonth month = YearMonth.of(2026, Month.MAY);
+        when(blockedDateRepository.findByDateBetween(any(), any())).thenReturn(List.of());
+        when(workingConfigRepository.findAll()).thenReturn(List.of());
+        when(timeSlotRepository.findByDateBetween(any(), any())).thenReturn(List.of());
+
+        // When
+        Map<String, String> result = slotGenerationService.getCalendarAvailability(month);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.containsKey("2026-05-15"));
+        assertEquals("NON_WORKING", result.get("2026-05-15"));
+    }
+
+    @Test
+    void getCalendarAvailability_ShouldReturnNoSlotsStatus_WhenNoSlots() {
+        // Given
+        YearMonth month = YearMonth.of(2026, Month.MAY);
+        testConfig.setDayOfWeek(java.time.DayOfWeek.FRIDAY);
+        when(blockedDateRepository.findByDateBetween(any(), any())).thenReturn(List.of());
+        when(workingConfigRepository.findAll()).thenReturn(List.of(testConfig));
+        when(timeSlotRepository.findByDateBetween(any(), any())).thenReturn(List.of());
+
+        // When
+        Map<String, String> result = slotGenerationService.getCalendarAvailability(month);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.containsKey("2026-05-15"));
+        assertEquals("NO_SLOTS", result.get("2026-05-15"));
+    }
+
+    @Test
+    void getCalendarAvailability_ShouldReturnFullStatus_WhenNoAvailableSlots() {
+        // Given
+        YearMonth month = YearMonth.of(2026, Month.MAY);
+        TimeSlot slot = TestDataFactory.createTestTimeSlot();
+        slot.setDisponible(false);
+        slot.setDate(LocalDate.of(2026, Month.MAY, 15));
+        testConfig.setDayOfWeek(java.time.DayOfWeek.FRIDAY);
+        when(blockedDateRepository.findByDateBetween(any(), any())).thenReturn(List.of());
+        when(workingConfigRepository.findAll()).thenReturn(List.of(testConfig));
+        when(timeSlotRepository.findByDateBetween(any(), any())).thenReturn(List.of(slot));
+
+        // When
+        Map<String, String> result = slotGenerationService.getCalendarAvailability(month);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.containsKey("2026-05-15"));
+        assertEquals("FULL", result.get("2026-05-15"));
+    }
+
+    @Test
+    void generateSlots_ShouldThrowException_WhenDateIsBlocked() {
+        // Given
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
+        when(blockedDateRepository.existsByDate(testDate)).thenReturn(true);
+
+        // When & Then
+        assertThrows(com.example.demo.exceptions.BadRequestException.class, () ->
+                slotGenerationService.generateSlots(testDate));
+
+        verify(timeSlotRepository, never()).deleteByDate(testDate);
+        verify(timeSlotRepository, never()).saveAll(anyList());
     }
 }
