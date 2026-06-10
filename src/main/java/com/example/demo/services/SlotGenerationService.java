@@ -20,7 +20,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
-public class SlotGenerationService {
+public class SlotGenerationService implements ISlotGenerationService {
 
     @Autowired
     private WorkingConfigRepository workingConfigRepository;

@@ -224,4 +224,151 @@ class SlotGenerationServiceTest {
         verify(timeSlotRepository).deleteByDate(testDate);
         verify(timeSlotRepository).saveAll(anyList());
     }
+
+    @Test
+    void generateSlotsForDate_ShouldReturnSlots_WhenSuccessful() {
+        // Given
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
+        when(blockedDateRepository.existsByDate(testDate)).thenReturn(false);
+        when(workingConfigRepository.findByDayOfWeek(any())).thenReturn(java.util.Optional.of(testConfig));
+        when(timeSlotRepository.findByDate(testDate)).thenReturn(List.of());
+        when(timeSlotRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
+        List<TimeSlot> result = slotGenerationService.generateSlotsForDate(testDate);
+
+        // Then
+        assertNotNull(result);
+        assertFalse(result.isEmpty());
+        verify(timeSlotRepository).saveAll(anyList());
+    }
+
+    @Test
+    void generateSlotsForDate_ShouldThrowException_WhenDateIsBlocked() {
+        // Given
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
+        when(blockedDateRepository.existsByDate(testDate)).thenReturn(true);
+
+        // When & Then
+        assertThrows(com.example.demo.exceptions.BadRequestException.class, () ->
+                slotGenerationService.generateSlotsForDate(testDate));
+
+        verify(timeSlotRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void generateSlotsForDate_ShouldThrowException_WhenNoWorkingConfigExists() {
+        // Given
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
+        when(blockedDateRepository.existsByDate(testDate)).thenReturn(false);
+        when(workingConfigRepository.findByDayOfWeek(any())).thenReturn(java.util.Optional.empty());
+
+        // When & Then
+        assertThrows(com.example.demo.exceptions.ResourceNotFoundException.class, () ->
+                slotGenerationService.generateSlotsForDate(testDate));
+
+        verify(timeSlotRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void generateSlotsForDate_ShouldReturnExistingSlots_WhenSlotsAlreadyExist() {
+        // Given
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
+        TimeSlot existingSlot = TestDataFactory.createTestTimeSlot();
+        when(blockedDateRepository.existsByDate(testDate)).thenReturn(false);
+        when(workingConfigRepository.findByDayOfWeek(any())).thenReturn(java.util.Optional.of(testConfig));
+        when(timeSlotRepository.findByDate(testDate)).thenReturn(List.of(existingSlot));
+
+        // When
+        List<TimeSlot> result = slotGenerationService.generateSlotsForDate(testDate);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(timeSlotRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void getAvailableSlotsForDate_ShouldReturnEmptyList_WhenDateIsBlocked() {
+        // Given
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
+        when(blockedDateRepository.existsByDate(testDate)).thenReturn(true);
+
+        // When
+        List<TimeSlot> result = slotGenerationService.getAvailableSlotsForDate(testDate);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(timeSlotRepository, never()).findByDateAndDisponibleTrue(testDate);
+    }
+
+    @Test
+    void saveWorkingConfig_ShouldThrowException_WhenEndTimeBeforeStartTime() {
+        // Given
+        testConfig.setStartTime(LocalTime.of(17, 0));
+        testConfig.setEndTime(LocalTime.of(9, 0));
+
+        // When & Then
+        assertThrows(IllegalArgumentException.class, () ->
+                slotGenerationService.saveWorkingConfig(testConfig));
+    }
+
+    @Test
+    void saveWorkingConfig_ShouldThrowException_WhenSlotDurationInvalid() {
+        // Given
+        testConfig.setSlotDurationMinutes(0);
+
+        // When & Then
+        assertThrows(IllegalArgumentException.class, () ->
+                slotGenerationService.saveWorkingConfig(testConfig));
+    }
+
+    @Test
+    void blockDate_ShouldThrowException_WhenDateAlreadyBlocked() {
+        // Given
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
+        when(blockedDateRepository.existsByDate(testDate)).thenReturn(true);
+
+        // When & Then
+        assertThrows(com.example.demo.exceptions.BadRequestException.class, () ->
+                slotGenerationService.blockDate(testDate, "Holiday"));
+    }
+
+    @Test
+    void unblockDate_ShouldThrowException_WhenDateNotBlocked() {
+        // Given
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
+        when(blockedDateRepository.findByDate(testDate)).thenReturn(java.util.Optional.empty());
+
+        // When & Then
+        assertThrows(com.example.demo.exceptions.ResourceNotFoundException.class, () ->
+                slotGenerationService.unblockDate(testDate));
+    }
+
+    @Test
+    void isDateBlocked_ShouldReturnTrue_WhenDateIsBlocked() {
+        // Given
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
+        when(blockedDateRepository.existsByDate(testDate)).thenReturn(true);
+
+        // When
+        boolean result = slotGenerationService.isDateBlocked(testDate);
+
+        // Then
+        assertTrue(result);
+    }
+
+    @Test
+    void isDateBlocked_ShouldReturnFalse_WhenDateIsNotBlocked() {
+        // Given
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
+        when(blockedDateRepository.existsByDate(testDate)).thenReturn(false);
+
+        // When
+        boolean result = slotGenerationService.isDateBlocked(testDate);
+
+        // Then
+        assertFalse(result);
+    }
 }

@@ -5,7 +5,7 @@ import com.example.demo.dto.WorkingConfigDTO;
 import com.example.demo.entities.BlockedDate;
 import com.example.demo.entities.TimeSlot;
 import com.example.demo.entities.WorkingConfig;
-import com.example.demo.services.SlotGenerationService;
+import com.example.demo.services.ISlotGenerationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +23,7 @@ public class SlotAdminController {
     private static final ZoneId ZONE_ID = ZoneId.of("Africa/Casablanca");
 
     @Autowired
-    private SlotGenerationService slotGenerationService;
+    private ISlotGenerationService slotGenerationService;
 
     @GetMapping("/slots/generate")
     public List<TimeSlot> generateSlots(@RequestParam String date) {
