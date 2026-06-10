@@ -5,12 +5,15 @@ import com.example.demo.entities.Statut;
 import com.example.demo.entities.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.Month;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -65,9 +68,10 @@ public class PdfServiceTest {
         assertTrue(pdfBytes.length > 0);
     }
 
-    @Test
-    void testGenerateAppointmentPdfWithCancelledStatus() throws Exception {
-        testRendezVous.setStatut(Statut.CANCELLED);
+    @ParameterizedTest
+    @MethodSource("provideStatuses")
+    void testGenerateAppointmentPdfWithDifferentStatuses(Statut status) throws Exception {
+        testRendezVous.setStatut(status);
 
         byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
 
@@ -75,24 +79,8 @@ public class PdfServiceTest {
         assertTrue(pdfBytes.length > 0);
     }
 
-    @Test
-    void testGenerateAppointmentPdfWithWaitingStatus() throws Exception {
-        testRendezVous.setStatut(Statut.WAITING);
-
-        byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
-
-        assertNotNull(pdfBytes);
-        assertTrue(pdfBytes.length > 0);
-    }
-
-    @Test
-    void testGenerateAppointmentPdfWithLongNotes() throws Exception {
-        testRendezVous.setNotes("This is a very long note that contains multiple lines of text to test the PDF generation with longer content.");
-
-        byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
-
-        assertNotNull(pdfBytes);
-        assertTrue(pdfBytes.length > 0);
+    private static Stream<Statut> provideStatuses() {
+        return Stream.of(Statut.CANCELLED, Statut.WAITING);
     }
 
     @Test

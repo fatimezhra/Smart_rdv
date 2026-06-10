@@ -1,8 +1,6 @@
 package com.example.demo.security;
 
-import com.example.demo.config.SecurityConfig;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Month;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,9 +18,9 @@ class RendezVousTest {
         user.setId(1L);
         TimeSlot timeSlot = new TimeSlot();
         timeSlot.setId(1L);
-        LocalDate date = LocalDate.of(2025, 1, 15);
+        LocalDate date = LocalDate.of(2025, Month.JANUARY, 15);
         LocalTime time = LocalTime.of(10, 0);
-        LocalDateTime updatedAt = LocalDateTime.now();
+        LocalDateTime updatedAt = LocalDateTime.of(2025, Month.JANUARY, 15, 10, 0);
 
         rendezVous.setId(1L);
         rendezVous.setDate(date);

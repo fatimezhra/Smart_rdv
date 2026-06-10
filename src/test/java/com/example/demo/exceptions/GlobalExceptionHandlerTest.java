@@ -2,6 +2,8 @@ package com.example.demo.exceptions;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -12,6 +14,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -86,38 +89,30 @@ class GlobalExceptionHandlerTest {
         assertEquals("VALIDATION_ERROR", response.getBody().get("error"));
     }
 
-    @Test
-    void handleNotFound_ShouldReturnNotFound_WhenUsernameNotFound() {
+    @ParameterizedTest
+    @MethodSource("provideNotFoundMessages")
+    void handleNotFound_ShouldReturnNotFound(String message) {
         // Given
-        UsernameNotFoundException ex = new UsernameNotFoundException("User not found");
+        UsernameNotFoundException ex = new UsernameNotFoundException(message);
 
         // When
         ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleNotFound(ex);
 
         // Then
         assertEquals(404, response.getStatusCode().value());
-        assertEquals("User not found", response.getBody().get("message"));
+        assertEquals(message, response.getBody().get("message"));
         assertEquals("NOT_FOUND", response.getBody().get("error"));
     }
 
-    @Test
-    void handleNotFound_ShouldReturnNotFound_WhenResourceNotFound() {
-        // Given
-        UsernameNotFoundException ex = new UsernameNotFoundException("Resource not found");
-
-        // When
-        ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleNotFound(ex);
-
-        // Then
-        assertEquals(404, response.getStatusCode().value());
-        assertEquals("Resource not found", response.getBody().get("message"));
-        assertEquals("NOT_FOUND", response.getBody().get("error"));
+    private static Stream<String> provideNotFoundMessages() {
+        return Stream.of("User not found", "Resource not found", "Custom not found message");
     }
 
-    @Test
-    void handleAccessDenied_ShouldReturnForbidden_WhenAccessDenied() {
+    @ParameterizedTest
+    @MethodSource("provideAccessDeniedMessages")
+    void handleAccessDenied_ShouldReturnForbidden(String message) {
         // Given
-        AccessDeniedException ex = new AccessDeniedException("Access denied");
+        AccessDeniedException ex = new AccessDeniedException(message);
 
         // When
         ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleAccessDenied(ex);
@@ -128,24 +123,15 @@ class GlobalExceptionHandlerTest {
         assertEquals("FORBIDDEN", response.getBody().get("error"));
     }
 
-    @Test
-    void handleAccessDenied_ShouldReturnForbidden_WhenInsufficientPermissions() {
-        // Given
-        AccessDeniedException ex = new AccessDeniedException("Insufficient permissions");
-
-        // When
-        ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleAccessDenied(ex);
-
-        // Then
-        assertEquals(403, response.getStatusCode().value());
-        assertEquals("Access denied", response.getBody().get("message"));
-        assertEquals("FORBIDDEN", response.getBody().get("error"));
+    private static Stream<String> provideAccessDeniedMessages() {
+        return Stream.of("Access denied", "Insufficient permissions", "Custom access denied message");
     }
 
-    @Test
-    void handleAuthentication_ShouldReturnUnauthorized_WhenAuthenticationFails() {
+    @ParameterizedTest
+    @MethodSource("provideAuthenticationMessages")
+    void handleAuthentication_ShouldReturnUnauthorized(String message) {
         // Given
-        AuthenticationException ex = new AuthenticationException("Authentication failed") {};
+        AuthenticationException ex = new AuthenticationException(message) {};
 
         // When
         ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleAuthentication(ex);
@@ -156,18 +142,8 @@ class GlobalExceptionHandlerTest {
         assertEquals("UNAUTHORIZED", response.getBody().get("error"));
     }
 
-    @Test
-    void handleAuthentication_ShouldReturnUnauthorized_WhenInvalidCredentials() {
-        // Given
-        AuthenticationException ex = new AuthenticationException("Invalid credentials") {};
-
-        // When
-        ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleAuthentication(ex);
-
-        // Then
-        assertEquals(401, response.getStatusCode().value());
-        assertEquals("Authentication failed", response.getBody().get("message"));
-        assertEquals("UNAUTHORIZED", response.getBody().get("error"));
+    private static Stream<String> provideAuthenticationMessages() {
+        return Stream.of("Authentication failed", "Invalid credentials", "Custom auth message");
     }
 
     @Test
@@ -240,48 +216,6 @@ class GlobalExceptionHandlerTest {
         assertEquals(400, response.getStatusCode().value());
         assertEquals("password: Password is required", response.getBody().get("message"));
         assertEquals("VALIDATION_ERROR", response.getBody().get("error"));
-    }
-
-    @Test
-    void handleNotFound_ShouldReturnNotFound_WhenCustomMessage() {
-        // Given
-        UsernameNotFoundException ex = new UsernameNotFoundException("Custom not found message");
-
-        // When
-        ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleNotFound(ex);
-
-        // Then
-        assertEquals(404, response.getStatusCode().value());
-        assertEquals("Custom not found message", response.getBody().get("message"));
-        assertEquals("NOT_FOUND", response.getBody().get("error"));
-    }
-
-    @Test
-    void handleAccessDenied_ShouldReturnForbidden_WhenCustomMessage() {
-        // Given
-        AccessDeniedException ex = new AccessDeniedException("Custom access denied message");
-
-        // When
-        ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleAccessDenied(ex);
-
-        // Then
-        assertEquals(403, response.getStatusCode().value());
-        assertEquals("Access denied", response.getBody().get("message"));
-        assertEquals("FORBIDDEN", response.getBody().get("error"));
-    }
-
-    @Test
-    void handleAuthentication_ShouldReturnUnauthorized_WhenCustomMessage() {
-        // Given
-        AuthenticationException ex = new AuthenticationException("Custom auth message") {};
-
-        // When
-        ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleAuthentication(ex);
-
-        // Then
-        assertEquals(401, response.getStatusCode().value());
-        assertEquals("Authentication failed", response.getBody().get("message"));
-        assertEquals("UNAUTHORIZED", response.getBody().get("error"));
     }
 
     @Test

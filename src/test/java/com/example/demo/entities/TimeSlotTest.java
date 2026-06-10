@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.Month;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,7 +13,7 @@ class TimeSlotTest {
     @Test
     void testSettersAndGetters() {
         TimeSlot timeSlot = new TimeSlot();
-        LocalDate date = LocalDate.of(2025, 1, 15);
+        LocalDate date = LocalDate.of(2025, Month.JANUARY, 15);
         LocalTime time = LocalTime.of(10, 0);
 
         timeSlot.setDate(date);

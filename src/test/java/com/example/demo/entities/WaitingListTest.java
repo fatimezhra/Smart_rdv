@@ -3,6 +3,7 @@ package com.example.demo.entities;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.Month;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -11,7 +12,7 @@ class WaitingListTest {
     @Test
     void testSettersAndGetters() {
         WaitingList waitingList = new WaitingList();
-        LocalDate date = LocalDate.of(2025, 1, 15);
+        LocalDate date = LocalDate.of(2025, Month.JANUARY, 15);
         User user = new User();
         user.setId(1L);
 
