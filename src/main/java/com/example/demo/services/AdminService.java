@@ -17,7 +17,7 @@ import com.example.demo.repositories.BlockedDateRepository;
 import com.example.demo.repositories.RendezVousRepository;
 import com.example.demo.repositories.UserRepository;
 import com.example.demo.repositories.WaitingListRepository;
-
+// Admin Service
 @Service
 public class AdminService {
 
