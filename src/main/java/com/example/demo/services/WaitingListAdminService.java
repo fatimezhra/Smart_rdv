@@ -4,6 +4,8 @@ import com.example.demo.entities.RendezVous;
 import com.example.demo.entities.Statut;
 import com.example.demo.entities.TimeSlot;
 import com.example.demo.entities.WaitingList;
+import com.example.demo.exceptions.BadRequestException;
+import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.repositories.RendezVousRepository;
 import com.example.demo.repositories.TimeSlotRepository;
 import com.example.demo.repositories.WaitingListRepository;
@@ -27,7 +29,7 @@ public class WaitingListAdminService {
     private RendezVousRepository rendezVousRepository;
 
     @Autowired
-    private ReservationService reservationService;
+    private IReservationService reservationService;
 
     public List<WaitingList> getFullWaitingList() {
         return waitingListRepository.findAllByOrderByDateAscPositionAsc();
@@ -36,13 +38,13 @@ public class WaitingListAdminService {
     @Transactional
     public void promoteWaitingListEntry(Long id) {
         WaitingList entry = waitingListRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Waiting list entry not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Waiting list entry not found"));
 
         LocalDate date = entry.getDate();
         List<TimeSlot> availableSlots = timeSlotRepository.findByDateAndDisponibleTrue(date);
 
         if (availableSlots.isEmpty()) {
-            throw new RuntimeException("No available slots for this date");
+            throw new BadRequestException("No available slots for this date");
         }
 
         TimeSlot slot = availableSlots.get(0);
@@ -60,7 +62,7 @@ public class WaitingListAdminService {
     @Transactional
     public void removeFromWaitingList(Long id) {
         WaitingList entry = waitingListRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Waiting list entry not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Waiting list entry not found"));
 
         LocalDate date = entry.getDate();
         waitingListRepository.delete(entry);

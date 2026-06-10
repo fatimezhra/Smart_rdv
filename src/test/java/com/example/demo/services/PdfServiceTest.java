@@ -5,14 +5,20 @@ import com.example.demo.entities.Statut;
 import com.example.demo.entities.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.Month;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@ActiveProfiles("test")
 public class PdfServiceTest {
 
     private PdfService pdfService;
@@ -21,16 +27,16 @@ public class PdfServiceTest {
     @BeforeEach
     void setUp() {
         pdfService = new PdfService();
-        
+
         // Create test user
         User testUser = new User();
         testUser.setName("John Doe");
         testUser.setEmail("john.doe@example.com");
-        
+
         // Create test appointment
         testRendezVous = new RendezVous();
         testRendezVous.setUser(testUser);
-        testRendezVous.setDate(LocalDate.of(2026, 5, 15));
+        testRendezVous.setDate(LocalDate.of(2026, Month.MAY, 15));
         testRendezVous.setHeure(LocalTime.of(10, 30));
         testRendezVous.setStatut(Statut.CONFIRMED);
         testRendezVous.setNotes("Regular checkup");
@@ -39,10 +45,10 @@ public class PdfServiceTest {
     @Test
     void testGenerateAppointmentPdf() throws Exception {
         byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
-        
+
         assertNotNull(pdfBytes);
         assertTrue(pdfBytes.length > 0);
-        
+
         // Verify PDF header
         String pdfHeader = new String(pdfBytes, 0, 4);
         assertEquals("%PDF", pdfHeader);
@@ -51,13 +57,78 @@ public class PdfServiceTest {
     @Test
     void testGenerateAppointmentPdfWithNullValues() throws Exception {
         RendezVous nullRendezVous = new RendezVous();
-        
+
         User testUser = new User();
         testUser.setName("Jane Smith");
         nullRendezVous.setUser(testUser);
-        
+
         byte[] pdfBytes = pdfService.generateAppointmentPdf(nullRendezVous);
-        
+
+        assertNotNull(pdfBytes);
+        assertTrue(pdfBytes.length > 0);
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideStatuses")
+    void testGenerateAppointmentPdfWithDifferentStatuses(Statut status) throws Exception {
+        testRendezVous.setStatut(status);
+
+        byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
+
+        assertNotNull(pdfBytes);
+        assertTrue(pdfBytes.length > 0);
+    }
+
+    private static Stream<Statut> provideStatuses() {
+        return Stream.of(Statut.CANCELLED, Statut.WAITING);
+    }
+
+    @Test
+    void testGenerateAppointmentPdfWithEmptyNotes() throws Exception {
+        testRendezVous.setNotes("");
+
+        byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
+
+        assertNotNull(pdfBytes);
+        assertTrue(pdfBytes.length > 0);
+    }
+
+    @Test
+    void testGenerateAppointmentPdfWithNullNotes() throws Exception {
+        testRendezVous.setNotes(null);
+
+        byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
+
+        assertNotNull(pdfBytes);
+        assertTrue(pdfBytes.length > 0);
+    }
+
+    @Test
+    void testGenerateAppointmentPdfWithDifferentTime() throws Exception {
+        testRendezVous.setHeure(LocalTime.of(14, 45));
+
+        byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
+
+        assertNotNull(pdfBytes);
+        assertTrue(pdfBytes.length > 0);
+    }
+
+    @Test
+    void testGenerateAppointmentPdfWithDifferentDate() throws Exception {
+        testRendezVous.setDate(LocalDate.of(2026, Month.DECEMBER, 25));
+
+        byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
+
+        assertNotNull(pdfBytes);
+        assertTrue(pdfBytes.length > 0);
+    }
+
+    @Test
+    void testGenerateAppointmentPdfWithSpecialCharactersInName() throws Exception {
+        testRendezVous.getUser().setName("Jean-François O'Connor");
+
+        byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
+
         assertNotNull(pdfBytes);
         assertTrue(pdfBytes.length > 0);
     }

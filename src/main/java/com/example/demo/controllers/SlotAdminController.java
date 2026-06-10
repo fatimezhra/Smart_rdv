@@ -1,15 +1,18 @@
 package com.example.demo.controllers;
 
+import com.example.demo.dto.BlockedDateDTO;
+import com.example.demo.dto.WorkingConfigDTO;
 import com.example.demo.entities.BlockedDate;
 import com.example.demo.entities.TimeSlot;
 import com.example.demo.entities.WorkingConfig;
-import com.example.demo.services.SlotGenerationService;
+import com.example.demo.services.ISlotGenerationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.List;
 
 @RestController
@@ -17,8 +20,10 @@ import java.util.List;
 @PreAuthorize("hasRole('ADMIN')")
 public class SlotAdminController {
 
+    private static final ZoneId ZONE_ID = ZoneId.of("Africa/Casablanca");
+
     @Autowired
-    private SlotGenerationService slotGenerationService;
+    private ISlotGenerationService slotGenerationService;
 
     @GetMapping("/slots/generate")
     public List<TimeSlot> generateSlots(@RequestParam String date) {
@@ -27,7 +32,12 @@ public class SlotAdminController {
     }
 
     @PostMapping("/config/hours")
-    public WorkingConfig setWorkingHours(@RequestBody WorkingConfig config) {
+    public WorkingConfig setWorkingHours(@RequestBody WorkingConfigDTO configDTO) {
+        WorkingConfig config = new WorkingConfig();
+        config.setDayOfWeek(configDTO.dayOfWeek());
+        config.setStartTime(configDTO.startTime());
+        config.setEndTime(configDTO.endTime());
+        config.setSlotDurationMinutes(configDTO.slotDurationMinutes());
         return slotGenerationService.saveWorkingConfig(config);
     }
 
@@ -37,8 +47,8 @@ public class SlotAdminController {
     }
 
     @PostMapping("/blocked-dates")
-    public BlockedDate blockDate(@RequestBody BlockedDate blockedDate) {
-        return slotGenerationService.blockDate(blockedDate.getDate(), blockedDate.getReason());
+    public BlockedDate blockDate(@RequestBody BlockedDateDTO blockedDateDTO) {
+        return slotGenerationService.blockDate(blockedDateDTO.getDate(), blockedDateDTO.getReason());
     }
 
     @DeleteMapping("/blocked-dates/{date}")
@@ -53,6 +63,6 @@ public class SlotAdminController {
             YearMonth ym = YearMonth.parse(month);
             return slotGenerationService.getBlockedDatesForMonth(ym);
         }
-        return slotGenerationService.getBlockedDatesForMonth(YearMonth.now());
+        return slotGenerationService.getBlockedDatesForMonth(YearMonth.now(ZONE_ID));
     }
 }

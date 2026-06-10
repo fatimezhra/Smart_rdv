@@ -17,7 +17,7 @@ import com.example.demo.dto.RegisterRequest;
 import com.example.demo.entities.Role;
 import com.example.demo.entities.User;
 import com.example.demo.repositories.UserRepository;
-import com.example.demo.security.JwtService;
+import com.example.demo.security.IJwtService;
 import com.example.demo.services.UserService;
 import jakarta.validation.Valid;
 
@@ -26,7 +26,7 @@ import jakarta.validation.Valid;
 public class AuthController {
 
     @Autowired
-    private JwtService jwtService;
+    private IJwtService jwtService;
     @Autowired
     private UserService userService;
     @Autowired

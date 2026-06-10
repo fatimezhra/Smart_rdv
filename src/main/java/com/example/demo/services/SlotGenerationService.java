@@ -3,6 +3,8 @@ package com.example.demo.services;
 import com.example.demo.entities.BlockedDate;
 import com.example.demo.entities.TimeSlot;
 import com.example.demo.entities.WorkingConfig;
+import com.example.demo.exceptions.BadRequestException;
+import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.repositories.BlockedDateRepository;
 import com.example.demo.repositories.TimeSlotRepository;
 import com.example.demo.repositories.WorkingConfigRepository;
@@ -18,7 +20,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
-public class SlotGenerationService {
+public class SlotGenerationService implements ISlotGenerationService {
 
     @Autowired
     private WorkingConfigRepository workingConfigRepository;
@@ -46,7 +48,7 @@ public class SlotGenerationService {
 
     public BlockedDate blockDate(LocalDate date, String reason) {
         if (blockedDateRepository.existsByDate(date)) {
-            throw new RuntimeException("Date already blocked");
+            throw new BadRequestException("Date already blocked");
         }
         BlockedDate blocked = new BlockedDate();
         blocked.setDate(date);
@@ -56,7 +58,7 @@ public class SlotGenerationService {
 
     public void unblockDate(LocalDate date) {
         BlockedDate blocked = blockedDateRepository.findByDate(date)
-                .orElseThrow(() -> new RuntimeException("Date not blocked"));
+                .orElseThrow(() -> new ResourceNotFoundException("Date not blocked"));
         blockedDateRepository.delete(blocked);
     }
 
@@ -73,12 +75,12 @@ public class SlotGenerationService {
     @Transactional
     public List<TimeSlot> generateSlotsForDate(LocalDate date) {
         if (isDateBlocked(date)) {
-            throw new RuntimeException("Cannot generate slots for a blocked date");
+            throw new BadRequestException("Cannot generate slots for a blocked date");
         }
 
         DayOfWeek dayOfWeek = date.getDayOfWeek();
         WorkingConfig config = workingConfigRepository.findByDayOfWeek(dayOfWeek)
-                .orElseThrow(() -> new RuntimeException("No working config for " + dayOfWeek));
+                .orElseThrow(() -> new ResourceNotFoundException("No working config for " + dayOfWeek));
 
         List<TimeSlot> existing = timeSlotRepository.findByDate(date);
         if (!existing.isEmpty()) {
@@ -122,7 +124,7 @@ public class SlotGenerationService {
             blockedDateMap.put(bd.getDate(), bd.getReason());
         }
 
-        Map<DayOfWeek, WorkingConfig> workingConfigMap = new HashMap<>();
+        Map<DayOfWeek, WorkingConfig> workingConfigMap = new EnumMap<>(DayOfWeek.class);
         for (WorkingConfig wc : workingConfigs) {
             workingConfigMap.put(wc.getDayOfWeek(), wc);
         }
@@ -134,40 +136,42 @@ public class SlotGenerationService {
 
         // Compute availability for each day
         for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
-            String status;
-            
-            if (blockedDateMap.containsKey(date)) {
-                status = "BLOCKED:" + blockedDateMap.get(date);
-            } else if (!workingConfigMap.containsKey(date.getDayOfWeek())) {
-                status = "NON_WORKING";
-            } else {
-                List<TimeSlot> daySlots = slotsByDate.get(date);
-                if (daySlots == null || daySlots.isEmpty()) {
-                    status = "NO_SLOTS";
-                } else {
-                    long available = daySlots.stream().filter(TimeSlot::isDisponible).count();
-                    if (available == 0) {
-                        status = "FULL";
-                    } else {
-                        status = "OPEN";
-                    }
-                }
-            }
+            String status = computeDateStatus(date, blockedDateMap, workingConfigMap, slotsByDate);
             result.put(date.toString(), status);
         }
         return result;
+    }
+
+    private String computeDateStatus(LocalDate date, Map<LocalDate, String> blockedDateMap,
+                                      Map<DayOfWeek, WorkingConfig> workingConfigMap,
+                                      Map<LocalDate, List<TimeSlot>> slotsByDate) {
+        if (blockedDateMap.containsKey(date)) {
+            return "BLOCKED:" + blockedDateMap.get(date);
+        }
+        if (!workingConfigMap.containsKey(date.getDayOfWeek())) {
+            return "NON_WORKING";
+        }
+        List<TimeSlot> daySlots = slotsByDate.get(date);
+        if (daySlots == null || daySlots.isEmpty()) {
+            return "NO_SLOTS";
+        }
+        long available = daySlots.stream().filter(TimeSlot::isDisponible).count();
+        if (available == 0) {
+            return "FULL";
+        }
+        return "OPEN";
     }
 
     // ===================== GENERATE SLOTS =====================
     @Transactional
     public List<TimeSlot> generateSlots(LocalDate date) {
         if (isDateBlocked(date)) {
-            throw new RuntimeException("Cannot generate slots for a blocked date");
+            throw new BadRequestException("Cannot generate slots for a blocked date");
         }
 
         DayOfWeek dayOfWeek = date.getDayOfWeek();
         WorkingConfig config = workingConfigRepository.findByDayOfWeek(dayOfWeek)
-                .orElseThrow(() -> new RuntimeException("No working config for " + dayOfWeek));
+                .orElseThrow(() -> new ResourceNotFoundException("No working config for " + dayOfWeek));
 
         // Delete existing slots for the date
         timeSlotRepository.deleteByDate(date);

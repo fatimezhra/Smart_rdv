@@ -1,30 +1,35 @@
 package com.example.demo.services;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.annotation.Isolation;
-
 import com.example.demo.entities.BlockedDate;
 import com.example.demo.entities.RendezVous;
 import com.example.demo.entities.Statut;
 import com.example.demo.entities.TimeSlot;
 import com.example.demo.entities.User;
 import com.example.demo.entities.WaitingList;
+import com.example.demo.exceptions.BadRequestException;
+import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.repositories.BlockedDateRepository;
 import com.example.demo.repositories.RendezVousRepository;
 import com.example.demo.repositories.TimeSlotRepository;
 import com.example.demo.repositories.WaitingListRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
-public class ReservationService {
+public class ReservationService implements IReservationService {
+
+    private static final String RENDEZ_VOUS_INTROUVABLE = "Rendez-vous introuvable";
+    private static final ZoneId ZONE_ID = ZoneId.of("Africa/Casablanca");
 
     @Autowired
     private TimeSlotRepository timeSlotRepository;
@@ -43,20 +48,20 @@ public class ReservationService {
 
     // ===================== RÉSERVER =====================
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public ResponseEntity<?> reserver(Long timeSlotId, User user) {
+    public ResponseEntity<Map<String, Object>> reserver(Long timeSlotId, User user) {
 
         TimeSlot slot = timeSlotRepository.findById(timeSlotId)
-                .orElseThrow(() -> new RuntimeException("TimeSlot introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException("TimeSlot introuvable"));
 
         if (blockedDateRepository.existsByDate(slot.getDate())) {
-            throw new RuntimeException("This date is unavailable.");
+            throw new BadRequestException("This date is unavailable.");
         }
 
         // Fix 4: Check if user already has a confirmed appointment on this date
         boolean dejaReserve = rendezVousRepository
                 .existsByUserAndDateAndStatut(user, slot.getDate(), Statut.CONFIRMED);
         if (dejaReserve) {
-            throw new RuntimeException("Vous avez déjà un rendez-vous confirmé ce jour.");
+            throw new BadRequestException("Vous avez déjà un rendez-vous confirmé ce jour.");
         }
 
         if (slot.isDisponible()) {
@@ -69,7 +74,7 @@ public class ReservationService {
             rdv.setStatut(Statut.CONFIRMED);
             rdv.setUser(user);
             rdv.setTimeSlot(slot);
-            rdv.setUpdatedAt(LocalDateTime.now());
+            rdv.setUpdatedAt(LocalDateTime.now(ZONE_ID));
 
             timeSlotRepository.save(slot);
             rendezVousRepository.save(rdv);
@@ -116,7 +121,6 @@ public class ReservationService {
     }
 
     // Fix 1: Private method for direct booking without alternatives logic
-    @Transactional
     private RendezVous reserverDirectement(TimeSlot slot, User user) {
         slot.setDisponible(false);
         timeSlotRepository.save(slot);
@@ -127,7 +131,7 @@ public class ReservationService {
         rdv.setDate(slot.getDate());
         rdv.setHeure(slot.getHeure());
         rdv.setStatut(Statut.CONFIRMED);
-        rdv.setUpdatedAt(LocalDateTime.now());
+        rdv.setUpdatedAt(LocalDateTime.now(ZONE_ID));
         
         return rendezVousRepository.save(rdv);
     }
@@ -136,14 +140,14 @@ public class ReservationService {
    @Transactional
    public void annuler(Long rdvId) {
     RendezVous rdv = rendezVousRepository.findById(rdvId)
-            .orElseThrow(() -> new RuntimeException("Rendez-vous introuvable"));
+            .orElseThrow(() -> new ResourceNotFoundException(RENDEZ_VOUS_INTROUVABLE));
 
     TimeSlot slot = rdv.getTimeSlot();
     LocalDate dateRdv = slot.getDate();
 
     slot.setDisponible(true);
     rdv.setStatut(Statut.CANCELLED);
-    rdv.setUpdatedAt(LocalDateTime.now());
+    rdv.setUpdatedAt(LocalDateTime.now(ZONE_ID));
 
     timeSlotRepository.save(slot);
     rendezVousRepository.save(rdv);
@@ -171,21 +175,21 @@ public class ReservationService {
     @Transactional
     public RendezVous reschedule(Long rdvId, Long newSlotId, User user) {
         RendezVous rdv = rendezVousRepository.findById(rdvId)
-                .orElseThrow(() -> new RuntimeException("Rendez-vous introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(RENDEZ_VOUS_INTROUVABLE));
 
         if (!rdv.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Not authorized");
+            throw new BadRequestException("Not authorized");
         }
 
         TimeSlot newSlot = timeSlotRepository.findById(newSlotId)
-                .orElseThrow(() -> new RuntimeException("TimeSlot introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException("TimeSlot introuvable"));
 
         if (!newSlot.isDisponible()) {
-            throw new RuntimeException("New slot is not available");
+            throw new BadRequestException("New slot is not available");
         }
 
         if (blockedDateRepository.existsByDate(newSlot.getDate())) {
-            throw new RuntimeException("This date is unavailable.");
+            throw new BadRequestException("This date is unavailable.");
         }
 
         // Free old slot
@@ -200,7 +204,7 @@ public class ReservationService {
         rdv.setTimeSlot(newSlot);
         rdv.setDate(newSlot.getDate());
         rdv.setHeure(newSlot.getHeure());
-        rdv.setUpdatedAt(LocalDateTime.now());
+        rdv.setUpdatedAt(LocalDateTime.now(ZONE_ID));
 
         // Promote waiting list for old slot date
         List<WaitingList> waitingList = waitingListRepository.findByDateOrderByPositionAsc(oldSlot.getDate());
@@ -221,12 +225,12 @@ public class ReservationService {
     // ===================== NOTES =====================
     public RendezVous addNotes(Long rdvId, String notes, User user) {
         RendezVous rdv = rendezVousRepository.findById(rdvId)
-                .orElseThrow(() -> new RuntimeException("Rendez-vous introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException(RENDEZ_VOUS_INTROUVABLE));
         if (!rdv.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Not authorized");
+            throw new BadRequestException("Not authorized");
         }
         rdv.setNotes(notes);
-        rdv.setUpdatedAt(LocalDateTime.now());
+        rdv.setUpdatedAt(LocalDateTime.now(ZONE_ID));
         return rendezVousRepository.save(rdv);
     }
 
@@ -262,6 +266,6 @@ public class ReservationService {
     private User getCurrentUser() {
         // This would typically be injected or retrieved from security context
         // For now, return a placeholder or throw exception
-        throw new RuntimeException("User context not available in service layer");
+        throw new IllegalStateException("User context not available in service layer");
     }
 }

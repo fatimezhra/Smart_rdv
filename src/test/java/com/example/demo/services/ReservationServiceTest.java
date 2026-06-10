@@ -193,7 +193,145 @@ class ReservationServiceTest {
         when(rendezVousRepository.findById(1L)).thenReturn(Optional.of(testRendezVous));
 
         // When & Then
-        assertThrows(RuntimeException.class, () -> 
+        assertThrows(RuntimeException.class, () ->
                 reservationService.addNotes(1L, "notes", testUser));
+    }
+
+    @Test
+    void reserver_ShouldThrowException_WhenTimeSlotNotFound() {
+        // Given
+        when(timeSlotRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(RuntimeException.class, () -> reservationService.reserver(1L, testUser));
+    }
+
+    @Test
+    void reserver_ShouldThrowException_WhenDateIsBlocked() {
+        // Given
+        testTimeSlot.setDisponible(true);
+        when(timeSlotRepository.findById(anyLong())).thenReturn(Optional.of(testTimeSlot));
+        when(blockedDateRepository.existsByDate(any(LocalDate.class))).thenReturn(true);
+
+        // When & Then
+        assertThrows(RuntimeException.class, () -> reservationService.reserver(1L, testUser));
+    }
+
+    @Test
+    void reserver_ShouldThrowException_WhenUserAlreadyHasConfirmedAppointment() {
+        // Given
+        testTimeSlot.setDisponible(true);
+        when(timeSlotRepository.findById(anyLong())).thenReturn(Optional.of(testTimeSlot));
+        when(rendezVousRepository.existsByUserAndDateAndStatut(eq(testUser), any(LocalDate.class), eq(Statut.CONFIRMED)))
+                .thenReturn(true);
+
+        // When & Then
+        assertThrows(RuntimeException.class, () -> reservationService.reserver(1L, testUser));
+    }
+
+    @Test
+    void reserver_ShouldReturnAlternatives_WhenSlotsAvailable() {
+        // Given
+        testTimeSlot.setDisponible(false);
+        TimeSlot alternativeSlot = TestDataFactory.createTestTimeSlot();
+        alternativeSlot.setHeure(LocalTime.of(14, 0));
+        alternativeSlot.setDisponible(true);
+
+        when(timeSlotRepository.findById(anyLong())).thenReturn(Optional.of(testTimeSlot));
+        when(rendezVousRepository.existsByUserAndDateAndStatut(eq(testUser), any(LocalDate.class), eq(Statut.CONFIRMED)))
+                .thenReturn(false);
+        when(timeSlotRepository.findByDateAndDisponibleTrue(any(LocalDate.class)))
+                .thenReturn(List.of(alternativeSlot));
+
+        // When
+        Object result = reservationService.reserver(1L, testUser);
+
+        // Then
+        assertNotNull(result);
+    }
+
+    @Test
+    void annuler_ShouldPromoteWaitingList_WhenUsersWaiting() {
+        // Given
+        WaitingList waitingUser = new WaitingList();
+        waitingUser.setId(2L);
+        waitingUser.setUser(testUser);
+        waitingUser.setPosition(1);
+
+        when(rendezVousRepository.findById(1L)).thenReturn(Optional.of(testRendezVous));
+        when(timeSlotRepository.save(any(TimeSlot.class))).thenReturn(testTimeSlot);
+        when(waitingListRepository.findByDateOrderByPositionAsc(any(LocalDate.class)))
+                .thenReturn(List.of(waitingUser));
+        when(rendezVousRepository.save(any(RendezVous.class))).thenReturn(testRendezVous);
+
+        // When
+        reservationService.annuler(1L);
+
+        // Then
+        verify(waitingListRepository).delete(waitingUser);
+    }
+
+    @Test
+    void reschedule_ShouldThrowException_WhenNewSlotNotFound() {
+        // Given
+        when(rendezVousRepository.findById(1L)).thenReturn(Optional.of(testRendezVous));
+        when(timeSlotRepository.findById(2L)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(RuntimeException.class, () ->
+                reservationService.reschedule(1L, 2L, testUser));
+    }
+
+    @Test
+    void reschedule_ShouldThrowException_WhenNewSlotNotAvailable() {
+        // Given
+        TimeSlot newSlot = TestDataFactory.createTestTimeSlot();
+        newSlot.setDisponible(false);
+
+        when(rendezVousRepository.findById(1L)).thenReturn(Optional.of(testRendezVous));
+        when(timeSlotRepository.findById(2L)).thenReturn(Optional.of(newSlot));
+
+        // When & Then
+        assertThrows(RuntimeException.class, () ->
+                reservationService.reschedule(1L, 2L, testUser));
+    }
+
+    @Test
+    void reschedule_ShouldThrowException_WhenNewDateBlocked() {
+        // Given
+        TimeSlot newSlot = TestDataFactory.createTestTimeSlot();
+        newSlot.setDisponible(true);
+
+        when(rendezVousRepository.findById(1L)).thenReturn(Optional.of(testRendezVous));
+        when(timeSlotRepository.findById(2L)).thenReturn(Optional.of(newSlot));
+        when(blockedDateRepository.existsByDate(any(LocalDate.class))).thenReturn(true);
+
+        // When & Then
+        assertThrows(RuntimeException.class, () ->
+                reservationService.reschedule(1L, 2L, testUser));
+    }
+
+    @Test
+    void addNotes_ShouldThrowException_WhenAppointmentNotFound() {
+        // Given
+        when(rendezVousRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(RuntimeException.class, () ->
+                reservationService.addNotes(1L, "notes", testUser));
+    }
+
+    @Test
+    void getMyReservations_ShouldThrowException_WhenUserContextNotAvailable() {
+        // When & Then
+        assertThrows(IllegalStateException.class, () ->
+                reservationService.getMyReservations());
+    }
+
+    @Test
+    void getUpcoming_ShouldThrowException_WhenUserContextNotAvailable() {
+        // When & Then
+        assertThrows(IllegalStateException.class, () ->
+                reservationService.getUpcoming());
     }
 }
