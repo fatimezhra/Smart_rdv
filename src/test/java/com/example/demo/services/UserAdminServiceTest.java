@@ -172,4 +172,69 @@ class UserAdminServiceTest {
         assertEquals(5L, result.get("reservationCount"));
         verify(rendezVousRepository).countByUser(testUser);
     }
+
+    @Test
+    void getAllUsers_ShouldReturnEmptyPage_WhenNoUsersExist() {
+        // Given
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<User> userPage = new PageImpl<>(List.of());
+
+        when(userRepository.findAll(pageable)).thenReturn(userPage);
+
+        // When
+        Page<User> result = userAdminService.getAllUsers(pageable);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(0, result.getTotalElements());
+        assertTrue(result.getContent().isEmpty());
+        verify(userRepository).findAll(pageable);
+    }
+
+    @Test
+    void disableUser_ShouldNotChangeOtherUserFields() {
+        // Given
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        // When
+        User result = userAdminService.disableUser(1L);
+
+        // Then
+        assertEquals(testUser.getName(), result.getName());
+        assertEquals(testUser.getEmail(), result.getEmail());
+        assertEquals(testUser.getRole(), result.getRole());
+        assertFalse(result.isEnabled());
+    }
+
+    @Test
+    void enableUser_ShouldNotChangeOtherUserFields() {
+        // Given
+        testUser.setEnabled(false);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        // When
+        User result = userAdminService.enableUser(1L);
+
+        // Then
+        assertEquals(testUser.getName(), result.getName());
+        assertEquals(testUser.getEmail(), result.getEmail());
+        assertEquals(testUser.getRole(), result.getRole());
+        assertTrue(result.isEnabled());
+    }
+
+    @Test
+    void getUserWithStats_ShouldReturnZeroReservationCount_WhenNoReservations() {
+        // Given
+        when(rendezVousRepository.countByUser(testUser)).thenReturn(0L);
+
+        // When
+        Map<String, Object> result = userAdminService.getUserWithStats(testUser);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(0L, result.get("reservationCount"));
+        verify(rendezVousRepository).countByUser(testUser);
+    }
 }

@@ -171,4 +171,83 @@ class AdminServiceTest {
         assertEquals(0L, result.get("totalReservations"));
         assertEquals(0L, result.get("waitingListCount"));
     }
+
+    @Test
+    void getDashboardData_ShouldIncludeWaitingListCount() {
+        // Given
+        when(userRepository.count()).thenReturn(100L);
+        when(rendezVousRepository.count()).thenReturn(500L);
+        when(rendezVousRepository.countByStatutAndDate(any(), any())).thenReturn(10L);
+        when(waitingListRepository.count()).thenReturn(25L);
+        when(rendezVousRepository.findByStatutAndDate(any(), any())).thenReturn(List.of());
+        when(rendezVousRepository.findTop10ByOrderByUpdatedAtDesc()).thenReturn(List.of());
+        when(blockedDateRepository.findByDateBetween(any(), any())).thenReturn(List.of());
+
+        // When
+        Map<String, Object> result = adminService.getDashboardData();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(25L, result.get("waitingListCount"));
+        verify(waitingListRepository).count();
+    }
+
+    @Test
+    void getDashboardData_ShouldReturnCorrectConfirmedTodayCount() {
+        // Given
+        when(userRepository.count()).thenReturn(100L);
+        when(rendezVousRepository.count()).thenReturn(500L);
+        when(rendezVousRepository.countByStatutAndDate(eq(Statut.CONFIRMED), any(LocalDate.class))).thenReturn(15L);
+        when(rendezVousRepository.countByStatutAndDate(eq(Statut.CANCELLED), any(LocalDate.class))).thenReturn(5L);
+        when(waitingListRepository.count()).thenReturn(20L);
+        when(rendezVousRepository.findByStatutAndDate(any(), any())).thenReturn(List.of());
+        when(rendezVousRepository.findTop10ByOrderByUpdatedAtDesc()).thenReturn(List.of());
+        when(blockedDateRepository.findByDateBetween(any(), any())).thenReturn(List.of());
+
+        // When
+        Map<String, Object> result = adminService.getDashboardData();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(15L, result.get("confirmedToday"));
+    }
+
+    @Test
+    void getDashboardData_ShouldReturnCorrectCancelledTodayCount() {
+        // Given
+        when(userRepository.count()).thenReturn(100L);
+        when(rendezVousRepository.count()).thenReturn(500L);
+        when(rendezVousRepository.countByStatutAndDate(eq(Statut.CONFIRMED), any(LocalDate.class))).thenReturn(10L);
+        when(rendezVousRepository.countByStatutAndDate(eq(Statut.CANCELLED), any(LocalDate.class))).thenReturn(8L);
+        when(waitingListRepository.count()).thenReturn(20L);
+        when(rendezVousRepository.findByStatutAndDate(any(), any())).thenReturn(List.of());
+        when(rendezVousRepository.findTop10ByOrderByUpdatedAtDesc()).thenReturn(List.of());
+        when(blockedDateRepository.findByDateBetween(any(), any())).thenReturn(List.of());
+
+        // When
+        Map<String, Object> result = adminService.getDashboardData();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(8L, result.get("cancelledToday"));
+    }
+
+    @Test
+    void getDashboardData_ShouldReturnTotalUsersCorrectly() {
+        // Given
+        when(userRepository.count()).thenReturn(150L);
+        when(rendezVousRepository.count()).thenReturn(500L);
+        when(rendezVousRepository.countByStatutAndDate(any(), any())).thenReturn(10L);
+        when(waitingListRepository.count()).thenReturn(20L);
+        when(rendezVousRepository.findByStatutAndDate(any(), any())).thenReturn(List.of());
+        when(rendezVousRepository.findTop10ByOrderByUpdatedAtDesc()).thenReturn(List.of());
+        when(blockedDateRepository.findByDateBetween(any(), any())).thenReturn(List.of());
+
+        // When
+        Map<String, Object> result = adminService.getDashboardData();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(150L, result.get("totalUsers"));
+    }
 }

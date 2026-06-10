@@ -145,4 +145,23 @@ class UserServiceTest {
         verify(passwordEncoder).encode(rawPassword);
         verify(userRepository).save(testUser);
     }
+
+    @Test
+    void register_ShouldEncodePassword() {
+        // Given
+        String rawPassword = "rawPassword";
+        String encodedPassword = "encodedPassword";
+        testUser.setPassword(rawPassword);
+
+        when(passwordEncoder.encode(rawPassword)).thenReturn(encodedPassword);
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        // When
+        User result = userService.register(testUser);
+
+        // Then
+        assertEquals(encodedPassword, result.getPassword());
+        verify(passwordEncoder).encode(rawPassword);
+        verify(userRepository).save(testUser);
+    }
 }

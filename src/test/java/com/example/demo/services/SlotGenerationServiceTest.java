@@ -163,4 +163,65 @@ class SlotGenerationServiceTest {
                 slot.isDisponible());
         }));
     }
+
+    @Test
+    void getAvailableSlotsForDate_ShouldReturnAvailableSlots() {
+        // Given
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
+        TimeSlot slot1 = TestDataFactory.createTestTimeSlot();
+        slot1.setDisponible(true);
+        TimeSlot slot2 = TestDataFactory.createTestTimeSlot();
+        slot2.setDisponible(false);
+
+        when(timeSlotRepository.findByDateAndDisponibleTrue(testDate)).thenReturn(List.of(slot1));
+
+        // When
+        List<TimeSlot> result = slotGenerationService.getAvailableSlotsForDate(testDate);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertTrue(result.get(0).isDisponible());
+    }
+
+    @Test
+    void getAvailableSlotsForDate_ShouldReturnEmptyList_WhenNoSlotsAvailable() {
+        // Given
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
+        when(timeSlotRepository.findByDateAndDisponibleTrue(testDate)).thenReturn(List.of());
+
+        // When
+        List<TimeSlot> result = slotGenerationService.getAvailableSlotsForDate(testDate);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getCalendarAvailability_ShouldReturnAvailabilityMap() {
+        // Given
+        java.time.YearMonth month = java.time.YearMonth.of(2026, Month.MAY);
+        when(timeSlotRepository.findByDateBetween(any(), any())).thenReturn(List.of());
+
+        // When
+        java.util.Map<String, String> result = slotGenerationService.getCalendarAvailability(month);
+
+        // Then
+        assertNotNull(result);
+    }
+
+    @Test
+    void generateSlots_ShouldDeleteExistingSlots_BeforeCreatingNew() {
+        // Given
+        LocalDate testDate = LocalDate.of(2026, Month.MAY, 15);
+        when(workingConfigRepository.findByDayOfWeek(any())).thenReturn(java.util.Optional.of(testConfig));
+
+        // When
+        slotGenerationService.generateSlots(testDate);
+
+        // Then
+        verify(timeSlotRepository).deleteByDate(testDate);
+        verify(timeSlotRepository).saveAll(anyList());
+    }
 }
