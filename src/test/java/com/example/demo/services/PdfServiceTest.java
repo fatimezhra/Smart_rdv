@@ -64,4 +64,84 @@ public class PdfServiceTest {
         assertNotNull(pdfBytes);
         assertTrue(pdfBytes.length > 0);
     }
+
+    @Test
+    void testGenerateAppointmentPdfWithCancelledStatus() throws Exception {
+        testRendezVous.setStatut(Statut.CANCELLED);
+
+        byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
+
+        assertNotNull(pdfBytes);
+        assertTrue(pdfBytes.length > 0);
+    }
+
+    @Test
+    void testGenerateAppointmentPdfWithWaitingStatus() throws Exception {
+        testRendezVous.setStatut(Statut.WAITING);
+
+        byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
+
+        assertNotNull(pdfBytes);
+        assertTrue(pdfBytes.length > 0);
+    }
+
+    @Test
+    void testGenerateAppointmentPdfWithLongNotes() throws Exception {
+        testRendezVous.setNotes("This is a very long note that contains multiple lines of text to test the PDF generation with longer content.");
+
+        byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
+
+        assertNotNull(pdfBytes);
+        assertTrue(pdfBytes.length > 0);
+    }
+
+    @Test
+    void testGenerateAppointmentPdfWithEmptyNotes() throws Exception {
+        testRendezVous.setNotes("");
+
+        byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
+
+        assertNotNull(pdfBytes);
+        assertTrue(pdfBytes.length > 0);
+    }
+
+    @Test
+    void testGenerateAppointmentPdfWithNullNotes() throws Exception {
+        testRendezVous.setNotes(null);
+
+        byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
+
+        assertNotNull(pdfBytes);
+        assertTrue(pdfBytes.length > 0);
+    }
+
+    @Test
+    void testGenerateAppointmentPdfWithDifferentTime() throws Exception {
+        testRendezVous.setHeure(LocalTime.of(14, 45));
+
+        byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
+
+        assertNotNull(pdfBytes);
+        assertTrue(pdfBytes.length > 0);
+    }
+
+    @Test
+    void testGenerateAppointmentPdfWithDifferentDate() throws Exception {
+        testRendezVous.setDate(LocalDate.of(2026, Month.DECEMBER, 25));
+
+        byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
+
+        assertNotNull(pdfBytes);
+        assertTrue(pdfBytes.length > 0);
+    }
+
+    @Test
+    void testGenerateAppointmentPdfWithSpecialCharactersInName() throws Exception {
+        testRendezVous.getUser().setName("Jean-François O'Connor");
+
+        byte[] pdfBytes = pdfService.generateAppointmentPdf(testRendezVous);
+
+        assertNotNull(pdfBytes);
+        assertTrue(pdfBytes.length > 0);
+    }
 }

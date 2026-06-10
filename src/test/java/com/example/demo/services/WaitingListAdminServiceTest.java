@@ -187,4 +187,153 @@ class WaitingListAdminServiceTest {
             return entries.get(0).getPosition() == 1;
         }));
     }
+
+    @Test
+    void promoteWaitingListEntry_ShouldRecalculatePositions_AfterPromotion() {
+        // Given
+        WaitingList entry2 = new WaitingList();
+        entry2.setId(2L);
+        entry2.setPosition(2);
+
+        when(waitingListRepository.findById(1L)).thenReturn(Optional.of(testWaitingList));
+        when(timeSlotRepository.findByDateAndDisponibleTrue(testWaitingList.getDate())).thenReturn(List.of(testSlot));
+        doReturn(ResponseEntity.ok(new RendezVous())).when(reservationService).reserver(testSlot.getId(), testUser);
+        when(waitingListRepository.findByDateOrderByPositionAsc(testWaitingList.getDate())).thenReturn(List.of(entry2));
+        doNothing().when(waitingListRepository).delete(testWaitingList);
+        when(waitingListRepository.saveAll(anyList())).thenReturn(List.of());
+
+        // When
+        waitingListAdminService.promoteWaitingListEntry(1L);
+
+        // Then
+        verify(waitingListRepository).saveAll(argThat(list -> {
+            List<WaitingList> entries = (List<WaitingList>) list;
+            return entries.get(0).getPosition() == 1;
+        }));
+    }
+
+    @Test
+    void getFullWaitingList_ShouldReturnEmptyList_WhenNoEntries() {
+        // Given
+        when(waitingListRepository.findAllByOrderByDateAscPositionAsc()).thenReturn(List.of());
+
+        // When
+        List<WaitingList> result = waitingListAdminService.getFullWaitingList();
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(waitingListRepository).findAllByOrderByDateAscPositionAsc();
+    }
+
+    @Test
+    void getFullWaitingList_ShouldReturnMultipleEntries() {
+        // Given
+        WaitingList entry2 = new WaitingList();
+        entry2.setId(2L);
+        entry2.setPosition(2);
+
+        List<WaitingList> waitingList = List.of(testWaitingList, entry2);
+        when(waitingListRepository.findAllByOrderByDateAscPositionAsc()).thenReturn(waitingList);
+
+        // When
+        List<WaitingList> result = waitingListAdminService.getFullWaitingList();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        verify(waitingListRepository).findAllByOrderByDateAscPositionAsc();
+    }
+
+    @Test
+    void promoteWaitingListEntry_ShouldHandleMultipleAvailableSlots() {
+        // Given
+        TimeSlot slot2 = new TimeSlot();
+        slot2.setId(2L);
+        slot2.setDate(testWaitingList.getDate());
+        slot2.setHeure(LocalTime.of(11, 0));
+        slot2.setDisponible(true);
+
+        when(waitingListRepository.findById(1L)).thenReturn(Optional.of(testWaitingList));
+        when(timeSlotRepository.findByDateAndDisponibleTrue(testWaitingList.getDate())).thenReturn(List.of(testSlot, slot2));
+        doReturn(ResponseEntity.ok(new RendezVous())).when(reservationService).reserver(testSlot.getId(), testUser);
+        when(waitingListRepository.findByDateOrderByPositionAsc(testWaitingList.getDate())).thenReturn(List.of());
+        doNothing().when(waitingListRepository).delete(testWaitingList);
+        when(waitingListRepository.saveAll(anyList())).thenReturn(List.of());
+
+        // When
+        waitingListAdminService.promoteWaitingListEntry(1L);
+
+        // Then
+        verify(reservationService).reserver(testSlot.getId(), testUser);
+    }
+
+    @Test
+    void removeFromWaitingList_ShouldHandleEmptyRemainingList() {
+        // Given
+        when(waitingListRepository.findById(1L)).thenReturn(Optional.of(testWaitingList));
+        when(waitingListRepository.findByDateOrderByPositionAsc(testWaitingList.getDate())).thenReturn(List.of());
+        doNothing().when(waitingListRepository).delete(testWaitingList);
+        when(waitingListRepository.saveAll(anyList())).thenReturn(List.of());
+
+        // When
+        waitingListAdminService.removeFromWaitingList(1L);
+
+        // Then
+        verify(waitingListRepository).saveAll(argThat(list -> {
+            List<WaitingList> entries = (List<WaitingList>) list;
+            return entries.isEmpty();
+        }));
+    }
+
+    @Test
+    void promoteWaitingListEntry_ShouldThrowException_WhenReservationFails() {
+        // Given
+        when(waitingListRepository.findById(1L)).thenReturn(Optional.of(testWaitingList));
+        when(timeSlotRepository.findByDateAndDisponibleTrue(testWaitingList.getDate())).thenReturn(List.of(testSlot));
+        doThrow(new RuntimeException("Reservation failed")).when(reservationService).reserver(testSlot.getId(), testUser);
+
+        // When & Then
+        assertThrows(RuntimeException.class, () -> waitingListAdminService.promoteWaitingListEntry(1L));
+        verify(waitingListRepository).findById(1L);
+        verify(timeSlotRepository).findByDateAndDisponibleTrue(testWaitingList.getDate());
+    }
+
+    @Test
+    void removeFromWaitingList_ShouldNotRecalculate_WhenNoRemainingEntries() {
+        // Given
+        when(waitingListRepository.findById(1L)).thenReturn(Optional.of(testWaitingList));
+        when(waitingListRepository.findByDateOrderByPositionAsc(testWaitingList.getDate())).thenReturn(List.of());
+        doNothing().when(waitingListRepository).delete(testWaitingList);
+        when(waitingListRepository.saveAll(anyList())).thenReturn(List.of());
+
+        // When
+        waitingListAdminService.removeFromWaitingList(1L);
+
+        // Then
+        verify(waitingListRepository).findByDateOrderByPositionAsc(testWaitingList.getDate());
+    }
+
+    @Test
+    void promoteWaitingListEntry_ShouldUseFirstAvailableSlot() {
+        // Given
+        TimeSlot slot2 = new TimeSlot();
+        slot2.setId(2L);
+        slot2.setDate(testWaitingList.getDate());
+        slot2.setHeure(LocalTime.of(9, 0));
+        slot2.setDisponible(true);
+
+        when(waitingListRepository.findById(1L)).thenReturn(Optional.of(testWaitingList));
+        when(timeSlotRepository.findByDateAndDisponibleTrue(testWaitingList.getDate())).thenReturn(List.of(slot2, testSlot));
+        doReturn(ResponseEntity.ok(new RendezVous())).when(reservationService).reserver(slot2.getId(), testUser);
+        when(waitingListRepository.findByDateOrderByPositionAsc(testWaitingList.getDate())).thenReturn(List.of());
+        doNothing().when(waitingListRepository).delete(testWaitingList);
+        when(waitingListRepository.saveAll(anyList())).thenReturn(List.of());
+
+        // When
+        waitingListAdminService.promoteWaitingListEntry(1L);
+
+        // Then
+        verify(reservationService).reserver(slot2.getId(), testUser);
+    }
 }

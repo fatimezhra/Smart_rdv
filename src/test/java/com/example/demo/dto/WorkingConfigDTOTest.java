@@ -167,4 +167,25 @@ class WorkingConfigDTOTest {
         assertEquals(LocalTime.of(20, 0), dto.endTime());
         assertEquals(90, dto.slotDurationMinutes());
     }
+
+    @Test
+    void fromEntity_ShouldHandleSunday() {
+        // Given
+        WorkingConfig entity = new WorkingConfig();
+        entity.setId(7L);
+        entity.setDayOfWeek(DayOfWeek.SUNDAY);
+        entity.setStartTime(LocalTime.of(10, 0));
+        entity.setEndTime(LocalTime.of(14, 0));
+        entity.setSlotDurationMinutes(30);
+
+        // When
+        WorkingConfigDTO dto = WorkingConfigDTO.fromEntity(entity);
+
+        // Then
+        assertNotNull(dto);
+        assertEquals(DayOfWeek.SUNDAY, dto.dayOfWeek());
+        assertEquals(LocalTime.of(10, 0), dto.startTime());
+        assertEquals(LocalTime.of(14, 0), dto.endTime());
+        assertEquals(30, dto.slotDurationMinutes());
+    }
 }

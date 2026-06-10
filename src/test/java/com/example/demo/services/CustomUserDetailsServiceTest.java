@@ -96,4 +96,68 @@ class CustomUserDetailsServiceTest {
         assertTrue(userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
         verify(userRepository).findByEmail("admin@example.com");
     }
+
+    @Test
+    void loadUserByUsername_ShouldReturnCorrectPassword() {
+        // Given
+        testUser.setPassword("testPassword123");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+
+        // When
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername("test@example.com");
+
+        // Then
+        assertEquals("testPassword123", userDetails.getPassword());
+        verify(userRepository).findByEmail("test@example.com");
+    }
+
+    @Test
+    void loadUserByUsername_ShouldReturnAccountNonExpired() {
+        // Given
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+
+        // When
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername("test@example.com");
+
+        // Then
+        assertTrue(userDetails.isAccountNonExpired());
+    }
+
+    @Test
+    void loadUserByUsername_ShouldReturnAccountNonLocked() {
+        // Given
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+
+        // When
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername("test@example.com");
+
+        // Then
+        assertTrue(userDetails.isAccountNonLocked());
+    }
+
+    @Test
+    void loadUserByUsername_ShouldReturnCredentialsNonExpired() {
+        // Given
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+
+        // When
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername("test@example.com");
+
+        // Then
+        assertTrue(userDetails.isCredentialsNonExpired());
+    }
+
+    @Test
+    void loadUserByUsername_ShouldReturnSingleAuthority() {
+        // Given
+        testUser.setRole(Role.CLIENT);
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+
+        // When
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername("test@example.com");
+
+        // Then
+        assertEquals(1, userDetails.getAuthorities().size());
+        assertTrue(userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_CLIENT")));
+    }
 }

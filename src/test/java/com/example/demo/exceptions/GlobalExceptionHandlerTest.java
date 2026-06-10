@@ -197,4 +197,124 @@ class GlobalExceptionHandlerTest {
         assertEquals("", response.getBody().get("message"));
         assertEquals("VALIDATION_ERROR", response.getBody().get("error"));
     }
+
+    @Test
+    void handleRuntime_ShouldReturnBadRequest_WhenIllegalArgumentException() {
+        // Given
+        RuntimeException ex = new IllegalArgumentException("Invalid argument");
+
+        // When
+        ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleRuntime(ex);
+
+        // Then
+        assertEquals(400, response.getStatusCode().value());
+        assertEquals("Invalid argument", response.getBody().get("message"));
+        assertEquals("BAD_REQUEST", response.getBody().get("error"));
+    }
+
+    @Test
+    void handleRuntime_ShouldReturnBadRequest_WhenIllegalStateException() {
+        // Given
+        RuntimeException ex = new IllegalStateException("Illegal state");
+
+        // When
+        ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleRuntime(ex);
+
+        // Then
+        assertEquals(400, response.getStatusCode().value());
+        assertEquals("Illegal state", response.getBody().get("message"));
+        assertEquals("BAD_REQUEST", response.getBody().get("error"));
+    }
+
+    @Test
+    void handleValidation_ShouldHandleSingleFieldError() {
+        // Given
+        BindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "object");
+        bindingResult.addError(new FieldError("user", "password", "Password is required"));
+        MethodArgumentNotValidException ex = new MethodArgumentNotValidException(null, bindingResult);
+
+        // When
+        ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleValidation(ex);
+
+        // Then
+        assertEquals(400, response.getStatusCode().value());
+        assertEquals("password: Password is required", response.getBody().get("message"));
+        assertEquals("VALIDATION_ERROR", response.getBody().get("error"));
+    }
+
+    @Test
+    void handleNotFound_ShouldReturnNotFound_WhenCustomMessage() {
+        // Given
+        UsernameNotFoundException ex = new UsernameNotFoundException("Custom not found message");
+
+        // When
+        ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleNotFound(ex);
+
+        // Then
+        assertEquals(404, response.getStatusCode().value());
+        assertEquals("Custom not found message", response.getBody().get("message"));
+        assertEquals("NOT_FOUND", response.getBody().get("error"));
+    }
+
+    @Test
+    void handleAccessDenied_ShouldReturnForbidden_WhenCustomMessage() {
+        // Given
+        AccessDeniedException ex = new AccessDeniedException("Custom access denied message");
+
+        // When
+        ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleAccessDenied(ex);
+
+        // Then
+        assertEquals(403, response.getStatusCode().value());
+        assertEquals("Access denied", response.getBody().get("message"));
+        assertEquals("FORBIDDEN", response.getBody().get("error"));
+    }
+
+    @Test
+    void handleAuthentication_ShouldReturnUnauthorized_WhenCustomMessage() {
+        // Given
+        AuthenticationException ex = new AuthenticationException("Custom auth message") {};
+
+        // When
+        ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleAuthentication(ex);
+
+        // Then
+        assertEquals(401, response.getStatusCode().value());
+        assertEquals("Authentication failed", response.getBody().get("message"));
+        assertEquals("UNAUTHORIZED", response.getBody().get("error"));
+    }
+
+    @Test
+    void handleRuntime_ShouldReturnBadRequest_WhenEmptyMessage() {
+        // Given
+        RuntimeException ex = new RuntimeException("");
+
+        // When
+        ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleRuntime(ex);
+
+        // Then
+        assertEquals(400, response.getStatusCode().value());
+        assertEquals("", response.getBody().get("message"));
+        assertEquals("BAD_REQUEST", response.getBody().get("error"));
+    }
+
+    @Test
+    void handleValidation_ShouldHandleThreeFieldErrors() {
+        // Given
+        BindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "object");
+        bindingResult.addError(new FieldError("user", "email", "Email is required"));
+        bindingResult.addError(new FieldError("user", "name", "Name is required"));
+        bindingResult.addError(new FieldError("user", "password", "Password is required"));
+        MethodArgumentNotValidException ex = new MethodArgumentNotValidException(null, bindingResult);
+
+        // When
+        ResponseEntity<Map<String, String>> response = globalExceptionHandler.handleValidation(ex);
+
+        // Then
+        assertEquals(400, response.getStatusCode().value());
+        assertTrue(response.getBody().get("message").contains("email"));
+        assertTrue(response.getBody().get("message").contains("name"));
+        assertTrue(response.getBody().get("message").contains("password"));
+        assertEquals("VALIDATION_ERROR", response.getBody().get("error"));
+    }
 }
