@@ -46,7 +46,11 @@ public class AuthController {
 
     // ADMIN CREATION — protected, only ADMIN can call
     @PostMapping("/admin/create")
-    public ResponseEntity<?> createAdmin(@RequestBody User user) {
+    public ResponseEntity<?> createAdmin(@Valid @RequestBody RegisterRequest request) {
+        User user = new User();
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        user.setPassword(request.getPassword());
         user.setRole(Role.ADMIN);
         user.setEnabled(true); // ← AJOUTÉ
         return ResponseEntity.ok(userService.register(user));
@@ -54,8 +58,8 @@ public class AuthController {
 
     // LOGIN
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody User user) {
-        return userService.login(user.getEmail(), user.getPassword());
+    public AuthResponse login(@Valid @RequestBody RegisterRequest request) {
+        return userService.login(request.getEmail(), request.getPassword());
     }
 
     // CURRENT USER
